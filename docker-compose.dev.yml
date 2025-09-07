@@ -2,7 +2,7 @@ services:
   # 开发环境数据库
   mysql-dev:
     image: mysql:8.0
-    container_name: air-quality-mysql-dev
+    container_name: aqs-mysql-dev
     environment:
       MYSQL_ROOT_PASSWORD: admin
       MYSQL_DATABASE: air_quality_dev
@@ -24,7 +24,7 @@ services:
   # 开发环境 Redis
   redis-dev:
     image: redis:7.0-alpine
-    container_name: air-quality-redis-dev
+    container_name: aqs-redis-dev
     ports:
       - "6380:6379"
     volumes:
@@ -57,7 +57,7 @@ services:
       context: .
       dockerfile: Dockerfile.dev
     image: air-quality-server:dev
-    container_name: air-quality-server-dev
+    container_name: aqs-server-dev
     ports:
       - "8083:8080"  # Web服务端口
       - "1885:1883"  # MQTT端口

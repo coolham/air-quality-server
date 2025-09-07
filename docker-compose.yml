@@ -2,7 +2,7 @@ services:
   # MySQL 数据库
   mysql:
     image: mysql:8.0
-    container_name: air-quality-mysql
+    container_name: aqs-mysql
     environment:
       MYSQL_ROOT_PASSWORD: admin
       MYSQL_DATABASE: air_quality
@@ -24,7 +24,7 @@ services:
   # Redis 缓存
   redis:
     image: redis:7.0-alpine
-    container_name: air-quality-redis
+    container_name: aqs-redis
     ports:
       - "6381:6379"
     volumes:
@@ -41,7 +41,7 @@ services:
   app:
     build: .
     image: air-quality-server:latest
-    container_name: air-quality-server
+    container_name: aqs-server
     ports:
       - "8082:8080"  # Web服务端口
       - "1883:1883"  # MQTT端口
@@ -56,8 +56,10 @@ services:
       - REDIS_PORT=6379
       - REDIS_PASSWORD=
     depends_on:
-      - mysql
-      - redis
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     # volumes:
       # - ./config:/app/config  # 移除卷映射，使用容器内配置文件
       # - ./logs:/app/logs      # 移除卷映射，日志输出到容器内
