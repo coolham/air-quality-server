@@ -45,7 +45,7 @@ services:
       - "8082:8080"  # Web服务端口
       - "1883:1883"  # MQTT端口
     environment:
-      - CONFIG_FILE=config/config.docker.yaml
+      - AIR_QUALITY_CONFIG=/app/config/config.docker.yaml
       - DB_HOST=mysql
       - DB_PORT=3306
       - DB_USERNAME=root

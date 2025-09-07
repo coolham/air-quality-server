@@ -55,8 +55,8 @@ COPY --from=builder /app/air-quality-server .
 # 复制配置文件
 COPY --from=builder /app/config ./config
 
-# 创建日志目录
-RUN mkdir -p /app/logs
+# 创建日志目录并设置权限
+RUN mkdir -p /app/logs && chmod 755 /app/logs
 
 # 暴露端口
 EXPOSE 8080 1883
