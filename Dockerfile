@@ -1,5 +1,5 @@
 # 构建阶段
-FROM golang:1.21-alpine AS builder
+FROM golang:1.24-alpine AS builder
 
 # 设置工作目录
 WORKDIR /app
@@ -27,12 +27,14 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
     ./cmd/air-quality-server
 
 # 运行阶段
-FROM scratch
+FROM alpine:latest
+
+# 安装必要的工具
+RUN apk add --no-cache wget ca-certificates tzdata
 
 # 从构建阶段复制必要的文件
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=builder /usr/share/zoneinfo /usr/share/zoneinfo
-COPY --from=builder /etc/passwd /etc/passwd
 
 # 设置时区
 ENV TZ=Asia/Shanghai
@@ -54,7 +56,7 @@ EXPOSE 8080 1883
 
 # 健康检查
 HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
-  CMD ["/app/air-quality-server", "-check-health"] || exit 1
+  CMD ["wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/health"] || exit 1
 
 # 启动应用
 CMD ["./air-quality-server"]

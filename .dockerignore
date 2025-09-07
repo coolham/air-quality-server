@@ -43,6 +43,7 @@ Thumbs.db
 Dockerfile*
 docker-compose*.yml
 .dockerignore
+.air.toml
 
 # 脚本文件
 scripts/

@@ -14,7 +14,7 @@ services:
       - "3307:3306"
     volumes:
       - mysql_dev_data:/var/lib/mysql
-      - ./scripts/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./scripts/database/init.sql:/docker-entrypoint-initdb.d/init.sql
     networks:
       - air-quality-dev-network
     restart: unless-stopped
@@ -52,6 +52,40 @@ services:
     networks:
       - air-quality-dev-network
     restart: unless-stopped
+
+  # 开发环境应用程序（可选，用于容器化开发）
+  air-quality-server-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: air-quality-server-dev
+    ports:
+      - "8081:8080"
+      - "1885:1883"
+    environment:
+      - CONFIG_FILE=config/config.dev.yaml
+      - DB_HOST=mysql-dev
+      - DB_PORT=3306
+      - DB_USERNAME=root
+      - DB_PASSWORD=admin
+      - DB_NAME=air_quality_dev
+      - REDIS_HOST=redis-dev
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=
+    depends_on:
+      mysql-dev:
+        condition: service_healthy
+      redis-dev:
+        condition: service_healthy
+    volumes:
+      - .:/app
+      - ./config:/app/config
+      - ./logs:/app/logs
+    networks:
+      - air-quality-dev-network
+    restart: unless-stopped
+    profiles:
+      - app
 
 volumes:
   mysql_dev_data:

@@ -6,25 +6,49 @@
 
 - **docker-start.bat** - 启动生产环境Docker服务
 - **docker-start.sh** - Linux环境启动脚本
-- **docker-dev-start.bat** - 启动开发环境Docker服务
+- **docker-dev-start.bat** - 启动开发环境数据库和缓存服务
 - **docker-dev-start.sh** - Linux开发环境启动脚本
+- **docker-dev-full.bat** - 启动完整开发环境（包含应用服务）
 - **docker-stop.sh** - 停止所有Docker容器
 
 ## 使用流程
 
-### 启动服务
+### 生产环境
 ```cmd
 # Windows生产环境
 docker-start.bat
 
-# Windows开发环境
-docker-dev-start.bat
-
 # Linux环境
 ./docker-start.sh
+```
+
+### 开发环境
+```cmd
+# 只启动数据库和缓存服务（推荐）
+docker-dev-start.bat
+
+# 启动完整开发环境（包含应用服务）
+docker-dev-full.bat
+
+# Linux开发环境
+./docker-dev-start.sh
 ```
 
 ### 停止服务
 ```bash
 ./docker-stop.sh
 ```
+
+## 环境说明
+
+### 生产环境 (docker-compose.yml)
+- MySQL: localhost:3306
+- Redis: localhost:6379
+- Web应用: localhost:8080
+- MQTT: localhost:1883
+
+### 开发环境 (docker-compose.dev.yml)
+- MySQL: localhost:3307
+- Redis: localhost:6380
+- MQTT: localhost:1884
+- Web应用: localhost:8081 (仅完整开发环境)
