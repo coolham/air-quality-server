@@ -60,8 +60,8 @@ services:
       dockerfile: Dockerfile.dev
     container_name: air-quality-server-dev
     ports:
-      - "8081:8080"
-      - "1885:1883"
+      - "8083:8080"  # Web服务端口
+      - "1885:1883"  # MQTT端口
     environment:
       - CONFIG_FILE=config/config.dev.yaml
       - DB_HOST=mysql-dev

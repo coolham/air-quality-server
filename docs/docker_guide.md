@@ -30,8 +30,8 @@
    ```
 
 3. **访问服务**
-   - Web界面: http://localhost:8080
-   - Dashboard: http://localhost:8080/dashboard
+   - Web界面: http://localhost:8082
+   - Dashboard: http://localhost:8082/dashboard
    - MQTT Broker: localhost:1883
 
 ### 开发环境部署
@@ -61,9 +61,9 @@
 
 | 服务 | 端口 | 描述 |
 |------|------|------|
-| air-quality-server | 8080, 1883 | 主应用服务 |
-| mysql | 3306 | MySQL数据库 |
-| redis | 6379 | Redis缓存 |
+| air-quality-server | 8082, 1883 | 主应用服务 |
+| mysql | 3308 | MySQL数据库 |
+| redis | 6381 | Redis缓存 |
 
 ### 开发环境 (docker-compose.dev.yml)
 
@@ -77,8 +77,8 @@
 
 ### 生产环境配置
 - `config/config.docker.yaml` - Docker环境专用配置
-- 数据库连接: `mysql:3306`
-- Redis连接: `redis:6379`
+- 数据库连接: `mysql:3306` (容器内部端口)
+- Redis连接: `redis:6379` (容器内部端口)
 
 ### 开发环境配置
 - `config/config.dev.yaml` - 开发环境配置
@@ -315,6 +315,127 @@ services:
       - air-quality-server-1
       - air-quality-server-2
 ```
+
+## 端口配置与冲突解决
+
+### 端口映射表
+
+#### 生产环境 (docker-compose.yml)
+
+| 服务 | 宿主机端口 | 容器端口 | 说明 |
+|------|------------|----------|------|
+| air-quality-server | **8082** | 8080 | Web应用服务 |
+| air-quality-server | 1883 | 1883 | MQTT Broker |
+| mysql | **3308** | 3306 | MySQL数据库 |
+| redis | **6381** | 6379 | Redis缓存 |
+
+#### 开发环境 (docker-compose.dev.yml)
+
+| 服务 | 宿主机端口 | 容器端口 | 说明 |
+|------|------------|----------|------|
+| mysql-dev | **3307** | 3306 | MySQL数据库 |
+| redis-dev | **6380** | 6379 | Redis缓存 |
+| mosquitto-dev | **1884** | 1883 | MQTT Broker |
+| mosquitto-dev | 9001 | 9001 | MQTT WebSocket |
+| air-quality-server-dev | **8083** | 8080 | Web应用服务 |
+| air-quality-server-dev | **1885** | 1883 | MQTT Broker |
+
+### 端口冲突解决方案
+
+#### 问题描述
+如果宿主机已经占用了以下端口：
+- 3306 (MySQL默认端口)
+- 6379 (Redis默认端口)
+- 8080 (Web应用默认端口)
+
+#### 解决方案
+1. **生产环境**：使用3308、6381、8082端口
+2. **开发环境**：使用3307、6380、8083端口
+
+#### 连接方式
+
+##### 从宿主机连接数据库
+```bash
+# 生产环境
+mysql -h localhost -P 3308 -u root -p
+redis-cli -h localhost -p 6381
+
+# 开发环境  
+mysql -h localhost -P 3307 -u root -p
+redis-cli -h localhost -p 6380
+```
+
+##### 从应用程序连接（容器内部）
+```yaml
+# 配置文件中的连接方式不变
+database:
+  host: "mysql"  # Docker服务名
+  port: 3306     # 容器内部端口
+
+redis:
+  host: "redis"  # Docker服务名
+  port: 6379     # 容器内部端口
+```
+
+### 端口检查
+
+#### 检查端口占用
+```bash
+# Windows
+netstat -an | findstr :3306
+netstat -an | findstr :6379
+netstat -an | findstr :8080
+
+# Linux/macOS
+lsof -i :3306
+lsof -i :6379
+lsof -i :8080
+```
+
+#### 检查Docker容器端口
+```bash
+# 查看所有容器端口映射
+docker ps
+
+# 查看特定容器端口
+docker port air-quality-mysql
+docker port air-quality-redis
+```
+
+### 自定义端口配置
+
+如果需要使用其他端口，可以修改docker-compose文件：
+
+```yaml
+# docker-compose.yml
+services:
+  mysql:
+    ports:
+      - "3309:3306"  # 修改宿主机端口为3309
+      
+  redis:
+    ports:
+      - "6382:6379"  # 修改宿主机端口为6382
+      
+  air-quality-server:
+    ports:
+      - "8084:8080"  # 修改宿主机端口为8084
+```
+
+### 常见问题
+
+#### Q: 为什么容器内部端口不变？
+A: 容器内部端口保持标准端口（3306、6379、8080），这样应用程序配置不需要修改。只有宿主机端口映射改变。
+
+#### Q: 如何从外部访问数据库？
+A: 使用宿主机端口访问：
+- 生产环境：localhost:3308
+- 开发环境：localhost:3307
+
+#### Q: 应用程序如何连接数据库？
+A: 在Docker容器内部，应用程序使用服务名和标准端口连接：
+- 生产环境：mysql:3306
+- 开发环境：mysql-dev:3306
 
 ## 联系支持
 

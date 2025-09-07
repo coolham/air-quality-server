@@ -11,6 +11,23 @@ if errorlevel 1 (
     exit /b 1
 )
 
+REM 检查端口占用情况
+echo 🔍 检查端口占用情况...
+netstat -an | findstr :3308 >nul
+if not errorlevel 1 (
+    echo ⚠️  端口3308已被占用，可能影响MySQL服务
+)
+
+netstat -an | findstr :6381 >nul
+if not errorlevel 1 (
+    echo ⚠️  端口6381已被占用，可能影响Redis服务
+)
+
+netstat -an | findstr :8082 >nul
+if not errorlevel 1 (
+    echo ⚠️  端口8082已被占用，可能影响Web服务
+)
+
 REM 设置Go代理环境变量
 set GOPROXY=https://goproxy.cn,direct
 set GOSUMDB=sum.golang.google.cn
