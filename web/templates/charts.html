@@ -27,6 +27,15 @@
                         </select>
                     </div>
                     <div class="col-md-2">
+                        <label for="sensorSelect" class="form-label">选择传感器</label>
+                        <select class="form-select" id="sensorSelect" name="sensor_id">
+                            <option value="">全部传感器</option>
+                            {{range .SensorIDs}}
+                            <option value="{{.}}" {{if eq . $.SelectedSensor}}selected{{end}}>{{.}}</option>
+                            {{end}}
+                        </select>
+                    </div>
+                    <div class="col-md-2">
                         <label for="metricSelect" class="form-label">选择指标</label>
                         <select class="form-select" id="metricSelect" name="metric">
                             <option value="all" {{if eq .SelectedMetric "all"}}selected{{end}}>全部指标</option>
@@ -54,10 +63,10 @@
                             <option value="scatter">散点图</option>
                         </select>
                     </div>
-                    <div class="col-md-3">
+                    <div class="col-md-1">
                         <label class="form-label">&nbsp;</label>
                         <button type="submit" class="btn btn-primary d-block w-100">
-                            <i class="fas fa-chart-line"></i> 生成图表
+                            <i class="fas fa-chart-line"></i> 生成
                         </button>
                     </div>
                 </form>
@@ -230,6 +239,7 @@ function initChart() {
 // 加载图表数据
 function loadChartData() {
     const deviceId = document.getElementById('deviceSelect').value;
+    const sensorId = document.getElementById('sensorSelect').value;
     const timeRange = document.getElementById('timeRangeSelect').value;
     const metric = document.getElementById('metricSelect').value;
     
@@ -245,8 +255,14 @@ function loadChartData() {
         airQualityChart.update();
     }
     
+    // 构建查询参数
+    let url = `/web/api/chart-data?device_id=${deviceId}&time_range=${timeRange}&metric=${metric}`;
+    if (sensorId) {
+        url += `&sensor_id=${sensorId}`;
+    }
+    
     // 获取数据
-    fetch(`/web/api/chart-data?device_id=${deviceId}&time_range=${timeRange}&metric=${metric}`)
+    fetch(url)
         .then(response => response.json())
         .then(data => {
             if (data.labels && data.datasets) {
@@ -328,6 +344,7 @@ function exportChart(format) {
 // 导出数据
 function exportData(format) {
     const deviceId = document.getElementById('deviceSelect').value;
+    const sensorId = document.getElementById('sensorSelect').value;
     const timeRange = document.getElementById('timeRangeSelect').value;
     const metric = document.getElementById('metricSelect').value;
     
@@ -336,13 +353,53 @@ function exportData(format) {
         return;
     }
     
-    window.open(`/web/api/chart-data?device_id=${deviceId}&time_range=${timeRange}&metric=${metric}&export=${format}`);
+    let url = `/web/api/chart-data?device_id=${deviceId}&time_range=${timeRange}&metric=${metric}&export=${format}`;
+    if (sensorId) {
+        url += `&sensor_id=${sensorId}`;
+    }
+    
+    window.open(url);
+}
+
+// 设备选择变化时加载传感器列表
+function loadSensorList(deviceId) {
+    const sensorSelect = document.getElementById('sensorSelect');
+    
+    if (!deviceId) {
+        sensorSelect.innerHTML = '<option value="">全部传感器</option>';
+        return;
+    }
+    
+    // 获取设备的传感器列表
+    fetch(`/web/api/sensors?device_id=${deviceId}`)
+        .then(response => response.json())
+        .then(data => {
+            sensorSelect.innerHTML = '<option value="">全部传感器</option>';
+            if (data.sensors && data.sensors.length > 0) {
+                data.sensors.forEach(sensorId => {
+                    const option = document.createElement('option');
+                    option.value = sensorId;
+                    option.textContent = sensorId;
+                    sensorSelect.appendChild(option);
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Error loading sensor list:', error);
+            sensorSelect.innerHTML = '<option value="">全部传感器</option>';
+        });
 }
 
 // 表单提交事件
 document.getElementById('chartFilterForm').addEventListener('submit', function(e) {
     e.preventDefault();
     loadChartData();
+});
+
+// 设备选择变化事件
+document.getElementById('deviceSelect').addEventListener('change', function() {
+    const deviceId = this.value;
+    loadSensorList(deviceId);
 });
 
 // 页面加载完成后初始化
@@ -353,9 +410,10 @@ document.addEventListener('DOMContentLoaded', function() {
     const selectedMetric = document.getElementById('metricSelect').value;
     updateStatisticsCards(selectedMetric);
     
-    // 如果有选中的设备，自动加载数据
+    // 如果有选中的设备，自动加载传感器列表和数据
     const selectedDevice = document.getElementById('deviceSelect').value;
     if (selectedDevice) {
+        loadSensorList(selectedDevice);
         loadChartData();
     }
 });

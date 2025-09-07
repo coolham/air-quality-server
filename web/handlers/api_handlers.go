@@ -17,6 +17,11 @@ func (h *WebHandlers) API(c *gin.Context) {
 	path := c.Request.URL.Path
 	var apiType string
 
+	// 添加调试日志
+	h.logger.Info("API请求",
+		utils.String("path", path),
+		utils.String("method", c.Request.Method))
+
 	// 根据路径确定API类型
 	switch {
 	case path == "/web/api/device-stats":
@@ -25,8 +30,13 @@ func (h *WebHandlers) API(c *gin.Context) {
 		apiType = "latest-data"
 	case path == "/web/api/chart-data":
 		apiType = "chart-data"
+	case path == "/web/api/sensors":
+		apiType = "sensors"
 	default:
 		apiType = c.Param("type")
+		h.logger.Warn("未知API类型",
+			utils.String("path", path),
+			utils.String("apiType", apiType))
 	}
 
 	ctx := context.Background()
@@ -60,6 +70,7 @@ func (h *WebHandlers) API(c *gin.Context) {
 
 	case "chart-data":
 		deviceID := c.Query("device_id")
+		sensorID := c.Query("sensor_id")
 		timeRange := c.DefaultQuery("time_range", "24")
 		metric := c.DefaultQuery("metric", "all")
 
@@ -78,12 +89,47 @@ func (h *WebHandlers) API(c *gin.Context) {
 			return
 		}
 
-		chartData := h.convertToChartDataFromUnified(historyData, metric)
+		chartData := h.convertToChartDataFromUnified(historyData, metric, sensorID)
 		c.JSON(http.StatusOK, chartData)
+
+	case "sensors":
+		deviceID := c.Query("device_id")
+		if deviceID == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "device_id is required"})
+			return
+		}
+
+		sensorIDs, err := h.services.UnifiedSensorData.GetSensorIDsByDeviceID(ctx, deviceID)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{"sensors": sensorIDs})
 
 	default:
 		c.JSON(http.StatusNotFound, gin.H{"error": "API endpoint not found"})
 	}
+}
+
+// SensorsAPI 传感器列表API
+func (h *WebHandlers) SensorsAPI(c *gin.Context) {
+	ctx := context.Background()
+
+	deviceID := c.Query("device_id")
+	if deviceID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "device_id is required"})
+		return
+	}
+
+	sensorIDs, err := h.services.UnifiedSensorData.GetSensorIDsByDeviceID(ctx, deviceID)
+	if err != nil {
+		h.logger.Error("获取传感器列表失败", utils.ErrorField(err))
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"sensors": sensorIDs})
 }
 
 // DataAPI 数据查询API

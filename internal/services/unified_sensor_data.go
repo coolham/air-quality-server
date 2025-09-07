@@ -38,6 +38,7 @@ type UnifiedSensorDataService interface {
 
 	// 获取传感器ID列表
 	GetSensorIDs(ctx context.Context, deviceID string) ([]string, error)
+	GetSensorIDsByDeviceID(ctx context.Context, deviceID string) ([]string, error)
 
 	// 获取所有设备数据
 	GetAllData(ctx context.Context, limit, offset int) ([]models.UnifiedSensorData, error)
@@ -337,6 +338,11 @@ func (s *unifiedSensorDataService) CheckAlerts(ctx context.Context, data *models
 
 // GetSensorIDs 获取传感器ID列表
 func (s *unifiedSensorDataService) GetSensorIDs(ctx context.Context, deviceID string) ([]string, error) {
+	return s.dataRepo.GetSensorIDs(ctx, deviceID)
+}
+
+// GetSensorIDsByDeviceID 根据设备ID获取传感器ID列表
+func (s *unifiedSensorDataService) GetSensorIDsByDeviceID(ctx context.Context, deviceID string) ([]string, error) {
 	return s.dataRepo.GetSensorIDs(ctx, deviceID)
 }
 

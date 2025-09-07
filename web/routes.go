@@ -79,7 +79,10 @@ func SetupRoutes(router *gin.Engine, services *services.Services, logger utils.L
 		// 图表数据API
 		webAPI.GET("/chart-data", webHandlers.API)
 
-		// 数据查询API
+		// 传感器列表API
+		webAPI.GET("/sensors", webHandlers.SensorsAPI)
+
+		// 数据查询API（放在最后，避免路由冲突）
 		webAPI.GET("/data", webHandlers.DataAPI)
 		webAPI.GET("/data/export", webHandlers.DataExportAPI)
 	}

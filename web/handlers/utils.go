@@ -180,12 +180,17 @@ func (h *WebHandlers) convertToChartData(historyData []models.AirQualityData) *C
 	}
 }
 
-// convertToChartDataFromUnified 将统一传感器数据转换为图表数据格式，支持指标选择
-func (h *WebHandlers) convertToChartDataFromUnified(historyData []models.UnifiedSensorData, metric string) *ChartData {
+// convertToChartDataFromUnified 将统一传感器数据转换为图表数据格式，支持指标选择和传感器过滤
+func (h *WebHandlers) convertToChartDataFromUnified(historyData []models.UnifiedSensorData, metric string, sensorID string) *ChartData {
 	var labels []string
 	var pm25Data, formaldehydeData, tempData, humidityData []float64
 
 	for _, data := range historyData {
+		// 如果指定了传感器ID，则过滤数据
+		if sensorID != "" && data.SensorID != sensorID {
+			continue
+		}
+
 		// 格式化时间标签
 		label := data.Timestamp.Format("15:04")
 		labels = append(labels, label)

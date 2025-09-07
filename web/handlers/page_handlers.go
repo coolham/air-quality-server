@@ -324,8 +324,19 @@ func (h *WebHandlers) Charts(c *gin.Context) {
 
 	// 获取查询参数
 	deviceID := c.Query("device_id")
+	sensorID := c.Query("sensor_id")
 	timeRange := c.DefaultQuery("time_range", "24") // 默认24小时
 	metric := c.DefaultQuery("metric", "all")       // 默认显示全部指标
+
+	// 获取设备的传感器列表
+	var sensorIDs []string
+	if deviceID != "" {
+		sensorIDs, err = h.services.UnifiedSensorData.GetSensorIDsByDeviceID(ctx, deviceID)
+		if err != nil {
+			h.logger.Error("获取传感器列表失败", utils.ErrorField(err))
+			sensorIDs = []string{}
+		}
+	}
 
 	var chartData *ChartData
 	if deviceID != "" {
@@ -341,14 +352,16 @@ func (h *WebHandlers) Charts(c *gin.Context) {
 		}
 
 		// 转换为图表数据格式
-		chartData = h.convertToChartDataFromUnified(historyData, metric)
+		chartData = h.convertToChartDataFromUnified(historyData, metric, sensorID)
 	}
 
 	data := gin.H{
 		"Title":          "数据图表",
 		"CurrentPage":    "charts",
 		"Devices":        devices,
+		"SensorIDs":      sensorIDs,
 		"SelectedDevice": deviceID,
+		"SelectedSensor": sensorID,
 		"SelectedMetric": metric,
 		"TimeRange":      timeRange,
 		"ChartData":      chartData,
