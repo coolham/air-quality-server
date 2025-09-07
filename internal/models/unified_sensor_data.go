@@ -298,6 +298,31 @@ type UnifiedSensorDataStatistics struct {
 	PressureMax     float64 `json:"pressure_max"`
 }
 
+// LocationInfo 位置信息
+type LocationInfo struct {
+	Latitude  *float64 `json:"latitude,omitempty"`
+	Longitude *float64 `json:"longitude,omitempty"`
+	Address   string   `json:"address,omitempty"`
+}
+
+// QualityInfo 数据质量信息
+type QualityInfo struct {
+	SignalStrength *int   `json:"signal_strength,omitempty"`
+	DataQuality    string `json:"data_quality,omitempty"`
+}
+
+// MQTTMessage MQTT消息结构
+type MQTTMessage struct {
+	DeviceID   string                 `json:"device_id"`
+	DeviceType string                 `json:"device_type"`
+	SensorID   string                 `json:"sensor_id"`
+	SensorType string                 `json:"sensor_type"`
+	Timestamp  int64                  `json:"timestamp"`
+	Data       map[string]interface{} `json:"data"`
+	Location   *LocationInfo          `json:"location,omitempty"`
+	Quality    *QualityInfo           `json:"quality,omitempty"`
+}
+
 // UnifiedSensorDataUpload 统一传感器数据上传请求
 type UnifiedSensorDataUpload struct {
 	DeviceID   string                 `json:"device_id" binding:"required"`

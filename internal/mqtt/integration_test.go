@@ -32,9 +32,6 @@ func setupTestDatabase(t *testing.T) *gorm.DB {
 		&models.Alert{},
 		&models.AlertRule{},
 		&models.SystemConfig{},
-		&models.FormaldehydeData{},
-		&models.FormaldehydeDeviceStatus{},
-		&models.FormaldehydeDeviceConfig{},
 	)
 	require.NoError(t, err)
 
@@ -52,10 +49,9 @@ func TestMQTTIntegration_CompleteFlow(t *testing.T) {
 
 	// 创建仓库
 	repos := &repositories.Repositories{
-		Device:              repositories.NewDeviceRepository(db, logger),
-		UnifiedSensorData:   repositories.NewUnifiedSensorDataRepository(db, logger),
-		DeviceRuntimeStatus: repositories.NewDeviceRuntimeStatusRepository(db, logger),
-		Alert:               repositories.NewAlertRepository(db, logger),
+		Device:            repositories.NewDeviceRepository(db, logger),
+		UnifiedSensorData: repositories.NewUnifiedSensorDataRepository(db, logger),
+		Alert:             repositories.NewAlertRepository(db, logger),
 	}
 
 	// 创建服务
@@ -67,7 +63,6 @@ func TestMQTTIntegration_CompleteFlow(t *testing.T) {
 	handler := NewSensorDataHandler(
 		repos.UnifiedSensorData,
 		repos.Device,
-		repos.DeviceRuntimeStatus,
 		svcs.Alert,
 		logger,
 	)
@@ -131,17 +126,7 @@ func TestMQTTIntegration_CompleteFlow(t *testing.T) {
 	assert.Equal(t, -65, *sensorData[0].SignalStrength)
 	assert.Equal(t, "good", sensorData[0].DataQuality)
 
-	// 检查设备状态
-	deviceStatus, err := repos.DeviceRuntimeStatus.GetByDeviceID(ctx, "hcho_001")
-	require.NoError(t, err)
-	assert.NotNil(t, deviceStatus)
-	assert.Equal(t, "hcho_001", deviceStatus.DeviceID)
-	assert.True(t, deviceStatus.Online)
-	assert.NotNil(t, deviceStatus.LastDataTime)
-	assert.NotNil(t, deviceStatus.BatteryLevel)
-	assert.Equal(t, 85, *deviceStatus.BatteryLevel)
-	assert.NotNil(t, deviceStatus.SignalStrength)
-	assert.Equal(t, -65, *deviceStatus.SignalStrength)
+	// 设备状态检查已移除，因为DeviceRuntimeStatusRepository已被删除
 }
 
 // TestMQTTIntegration_AlertGeneration 测试告警生成
@@ -155,10 +140,9 @@ func TestMQTTIntegration_AlertGeneration(t *testing.T) {
 
 	// 创建仓库
 	repos := &repositories.Repositories{
-		Device:              repositories.NewDeviceRepository(db, logger),
-		UnifiedSensorData:   repositories.NewUnifiedSensorDataRepository(db, logger),
-		DeviceRuntimeStatus: repositories.NewDeviceRuntimeStatusRepository(db, logger),
-		Alert:               repositories.NewAlertRepository(db, logger),
+		Device:            repositories.NewDeviceRepository(db, logger),
+		UnifiedSensorData: repositories.NewUnifiedSensorDataRepository(db, logger),
+		Alert:             repositories.NewAlertRepository(db, logger),
 	}
 
 	// 创建服务
@@ -170,7 +154,6 @@ func TestMQTTIntegration_AlertGeneration(t *testing.T) {
 	handler := NewSensorDataHandler(
 		repos.UnifiedSensorData,
 		repos.Device,
-		repos.DeviceRuntimeStatus,
 		svcs.Alert,
 		logger,
 	)
@@ -225,10 +208,9 @@ func TestMQTTIntegration_MultipleDevices(t *testing.T) {
 
 	// 创建仓库
 	repos := &repositories.Repositories{
-		Device:              repositories.NewDeviceRepository(db, logger),
-		UnifiedSensorData:   repositories.NewUnifiedSensorDataRepository(db, logger),
-		DeviceRuntimeStatus: repositories.NewDeviceRuntimeStatusRepository(db, logger),
-		Alert:               repositories.NewAlertRepository(db, logger),
+		Device:            repositories.NewDeviceRepository(db, logger),
+		UnifiedSensorData: repositories.NewUnifiedSensorDataRepository(db, logger),
+		Alert:             repositories.NewAlertRepository(db, logger),
 	}
 
 	// 创建服务
@@ -240,7 +222,6 @@ func TestMQTTIntegration_MultipleDevices(t *testing.T) {
 	handler := NewSensorDataHandler(
 		repos.UnifiedSensorData,
 		repos.Device,
-		repos.DeviceRuntimeStatus,
 		svcs.Alert,
 		logger,
 	)
@@ -282,12 +263,7 @@ func TestMQTTIntegration_MultipleDevices(t *testing.T) {
 		require.Len(t, sensorData, 1)
 		assert.Equal(t, deviceID, sensorData[0].DeviceID)
 
-		// 检查设备状态
-		deviceStatus, err := repos.DeviceRuntimeStatus.GetByDeviceID(ctx, deviceID)
-		require.NoError(t, err)
-		assert.NotNil(t, deviceStatus)
-		assert.Equal(t, deviceID, deviceStatus.DeviceID)
-		assert.True(t, deviceStatus.Online)
+		// 设备状态检查已移除，因为DeviceRuntimeStatusRepository已被删除
 	}
 }
 
@@ -302,10 +278,9 @@ func TestMQTTIntegration_DataValidation(t *testing.T) {
 
 	// 创建仓库
 	repos := &repositories.Repositories{
-		Device:              repositories.NewDeviceRepository(db, logger),
-		UnifiedSensorData:   repositories.NewUnifiedSensorDataRepository(db, logger),
-		DeviceRuntimeStatus: repositories.NewDeviceRuntimeStatusRepository(db, logger),
-		Alert:               repositories.NewAlertRepository(db, logger),
+		Device:            repositories.NewDeviceRepository(db, logger),
+		UnifiedSensorData: repositories.NewUnifiedSensorDataRepository(db, logger),
+		Alert:             repositories.NewAlertRepository(db, logger),
 	}
 
 	// 创建服务
@@ -317,7 +292,6 @@ func TestMQTTIntegration_DataValidation(t *testing.T) {
 	handler := NewSensorDataHandler(
 		repos.UnifiedSensorData,
 		repos.Device,
-		repos.DeviceRuntimeStatus,
 		svcs.Alert,
 		logger,
 	)
@@ -349,7 +323,7 @@ func TestMQTTIntegration_DataValidation(t *testing.T) {
 					"formaldehyde": 0.05,
 				},
 			},
-			wantErr: false, // 时间戳解析失败会使用当前时间
+			wantErr: true, // 时间戳解析失败会报错
 		},
 		{
 			name: "缺少数据字段",
@@ -391,10 +365,9 @@ func BenchmarkMQTTIntegration_HandleMessage(b *testing.B) {
 
 	// 创建仓库
 	repos := &repositories.Repositories{
-		Device:              repositories.NewDeviceRepository(db, logger),
-		UnifiedSensorData:   repositories.NewUnifiedSensorDataRepository(db, logger),
-		DeviceRuntimeStatus: repositories.NewDeviceRuntimeStatusRepository(db, logger),
-		Alert:               repositories.NewAlertRepository(db, logger),
+		Device:            repositories.NewDeviceRepository(db, logger),
+		UnifiedSensorData: repositories.NewUnifiedSensorDataRepository(db, logger),
+		Alert:             repositories.NewAlertRepository(db, logger),
 	}
 
 	// 创建服务
@@ -406,7 +379,6 @@ func BenchmarkMQTTIntegration_HandleMessage(b *testing.B) {
 	handler := NewSensorDataHandler(
 		repos.UnifiedSensorData,
 		repos.Device,
-		repos.DeviceRuntimeStatus,
 		svcs.Alert,
 		logger,
 	)

@@ -13,7 +13,22 @@ import (
 
 // API 数据API接口
 func (h *WebHandlers) API(c *gin.Context) {
-	apiType := c.Param("type")
+	// 从URL路径中提取API类型
+	path := c.Request.URL.Path
+	var apiType string
+
+	// 根据路径确定API类型
+	switch {
+	case path == "/web/api/device-stats":
+		apiType = "device-stats"
+	case path == "/web/api/latest-data":
+		apiType = "latest-data"
+	case path == "/web/api/chart-data":
+		apiType = "chart-data"
+	default:
+		apiType = c.Param("type")
+	}
+
 	ctx := context.Background()
 
 	switch apiType {
@@ -46,6 +61,7 @@ func (h *WebHandlers) API(c *gin.Context) {
 	case "chart-data":
 		deviceID := c.Query("device_id")
 		timeRange := c.DefaultQuery("time_range", "24")
+		metric := c.DefaultQuery("metric", "all")
 
 		if deviceID == "" {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "device_id is required"})
@@ -56,13 +72,13 @@ func (h *WebHandlers) API(c *gin.Context) {
 		endTime := time.Now()
 		startTime := endTime.Add(-time.Duration(hours) * time.Hour)
 
-		historyData, err := h.services.AirQuality.GetDataByTimeRange(ctx, deviceID, startTime.Unix(), endTime.Unix())
+		historyData, err := h.services.UnifiedSensorData.GetDataByTimeRange(ctx, deviceID, startTime.Unix(), endTime.Unix())
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
 
-		chartData := h.convertToChartData(historyData)
+		chartData := h.convertToChartDataFromUnified(historyData, metric)
 		c.JSON(http.StatusOK, chartData)
 
 	default:

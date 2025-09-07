@@ -17,7 +17,7 @@
         <div class="card shadow">
             <div class="card-body">
                 <form id="chartFilterForm" class="row g-3">
-                    <div class="col-md-4">
+                    <div class="col-md-3">
                         <label for="deviceSelect" class="form-label">选择设备</label>
                         <select class="form-select" id="deviceSelect" name="device_id" required>
                             <option value="">请选择设备</option>
@@ -26,7 +26,17 @@
                             {{end}}
                         </select>
                     </div>
-                    <div class="col-md-3">
+                    <div class="col-md-2">
+                        <label for="metricSelect" class="form-label">选择指标</label>
+                        <select class="form-select" id="metricSelect" name="metric">
+                            <option value="all" {{if eq .SelectedMetric "all"}}selected{{end}}>全部指标</option>
+                            <option value="pm25" {{if eq .SelectedMetric "pm25"}}selected{{end}}>PM2.5</option>
+                            <option value="formaldehyde" {{if eq .SelectedMetric "formaldehyde"}}selected{{end}}>甲醛</option>
+                            <option value="temperature" {{if eq .SelectedMetric "temperature"}}selected{{end}}>温度</option>
+                            <option value="humidity" {{if eq .SelectedMetric "humidity"}}selected{{end}}>湿度</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
                         <label for="timeRangeSelect" class="form-label">时间范围</label>
                         <select class="form-select" id="timeRangeSelect" name="time_range">
                             <option value="1" {{if eq .TimeRange "1"}}selected{{end}}>最近1小时</option>
@@ -36,7 +46,7 @@
                             <option value="720" {{if eq .TimeRange "720"}}selected{{end}}>最近30天</option>
                         </select>
                     </div>
-                    <div class="col-md-3">
+                    <div class="col-md-2">
                         <label for="chartTypeSelect" class="form-label">图表类型</label>
                         <select class="form-select" id="chartTypeSelect">
                             <option value="line">折线图</option>
@@ -44,7 +54,7 @@
                             <option value="scatter">散点图</option>
                         </select>
                     </div>
-                    <div class="col-md-2">
+                    <div class="col-md-3">
                         <label class="form-label">&nbsp;</label>
                         <button type="submit" class="btn btn-primary d-block w-100">
                             <i class="fas fa-chart-line"></i> 生成图表
@@ -83,8 +93,8 @@
 </div>
 
 <!-- 数据统计卡片 -->
-<div class="row">
-    <div class="col-md-3 mb-4">
+<div class="row" id="statisticsCards">
+    <div class="col-md-3 mb-4" id="pm25Card">
         <div class="card border-left-primary shadow h-100 py-2">
             <div class="card-body">
                 <div class="row no-gutters align-items-center">
@@ -104,27 +114,27 @@
         </div>
     </div>
 
-    <div class="col-md-3 mb-4">
-        <div class="card border-left-success shadow h-100 py-2">
+    <div class="col-md-3 mb-4" id="formaldehydeCard">
+        <div class="card border-left-danger shadow h-100 py-2">
             <div class="card-body">
                 <div class="row no-gutters align-items-center">
                     <div class="col mr-2">
-                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
-                            PM10 平均值
+                        <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
+                            甲醛平均值
                         </div>
-                        <div class="h5 mb-0 font-weight-bold text-gray-800" id="avgPM10">
-                            -- μg/m³
+                        <div class="h5 mb-0 font-weight-bold text-gray-800" id="avgFormaldehyde">
+                            -- mg/m³
                         </div>
                     </div>
                     <div class="col-auto">
-                        <i class="fas fa-wind fa-2x text-gray-300"></i>
+                        <i class="fas fa-exclamation-triangle fa-2x text-gray-300"></i>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="col-md-3 mb-4">
+    <div class="col-md-3 mb-4" id="temperatureCard">
         <div class="card border-left-info shadow h-100 py-2">
             <div class="card-body">
                 <div class="row no-gutters align-items-center">
@@ -144,7 +154,7 @@
         </div>
     </div>
 
-    <div class="col-md-3 mb-4">
+    <div class="col-md-3 mb-4" id="humidityCard">
         <div class="card border-left-warning shadow h-100 py-2">
             <div class="card-body">
                 <div class="row no-gutters align-items-center">
@@ -221,6 +231,7 @@ function initChart() {
 function loadChartData() {
     const deviceId = document.getElementById('deviceSelect').value;
     const timeRange = document.getElementById('timeRangeSelect').value;
+    const metric = document.getElementById('metricSelect').value;
     
     if (!deviceId) {
         alert('请选择设备');
@@ -235,12 +246,13 @@ function loadChartData() {
     }
     
     // 获取数据
-    fetch(`/web/api/chart-data?device_id=${deviceId}&time_range=${timeRange}`)
+    fetch(`/web/api/chart-data?device_id=${deviceId}&time_range=${timeRange}&metric=${metric}`)
         .then(response => response.json())
         .then(data => {
             if (data.labels && data.datasets) {
                 updateChart(data);
                 updateStatistics(data);
+                updateStatisticsCards(metric);
             } else {
                 console.error('Invalid chart data:', data);
             }
@@ -267,19 +279,36 @@ function updateStatistics(data) {
     if (data.datasets && data.datasets.length > 0) {
         // 计算平均值
         const pm25Data = data.datasets.find(d => d.label === 'PM2.5')?.data || [];
-        const pm10Data = data.datasets.find(d => d.label === 'PM10')?.data || [];
+        const formaldehydeData = data.datasets.find(d => d.label === '甲醛')?.data || [];
         const tempData = data.datasets.find(d => d.label === '温度')?.data || [];
         const humidityData = data.datasets.find(d => d.label === '湿度')?.data || [];
         
         document.getElementById('avgPM25').textContent = 
             pm25Data.length > 0 ? (pm25Data.reduce((a, b) => a + b, 0) / pm25Data.length).toFixed(1) + ' μg/m³' : '-- μg/m³';
-        document.getElementById('avgPM10').textContent = 
-            pm10Data.length > 0 ? (pm10Data.reduce((a, b) => a + b, 0) / pm10Data.length).toFixed(1) + ' μg/m³' : '-- μg/m³';
+        document.getElementById('avgFormaldehyde').textContent = 
+            formaldehydeData.length > 0 ? (formaldehydeData.reduce((a, b) => a + b, 0) / formaldehydeData.length).toFixed(3) + ' mg/m³' : '-- mg/m³';
         document.getElementById('avgTemp').textContent = 
             tempData.length > 0 ? (tempData.reduce((a, b) => a + b, 0) / tempData.length).toFixed(1) + ' °C' : '-- °C';
         document.getElementById('avgHumidity').textContent = 
             humidityData.length > 0 ? (humidityData.reduce((a, b) => a + b, 0) / humidityData.length).toFixed(1) + ' %' : '-- %';
     }
+}
+
+// 更新统计卡片显示
+function updateStatisticsCards(selectedMetric) {
+    const cards = {
+        'pm25Card': selectedMetric === 'all' || selectedMetric === 'pm25',
+        'formaldehydeCard': selectedMetric === 'all' || selectedMetric === 'formaldehyde',
+        'temperatureCard': selectedMetric === 'all' || selectedMetric === 'temperature',
+        'humidityCard': selectedMetric === 'all' || selectedMetric === 'humidity'
+    };
+    
+    Object.keys(cards).forEach(cardId => {
+        const card = document.getElementById(cardId);
+        if (card) {
+            card.style.display = cards[cardId] ? 'block' : 'none';
+        }
+    });
 }
 
 // 导出图表
@@ -300,13 +329,14 @@ function exportChart(format) {
 function exportData(format) {
     const deviceId = document.getElementById('deviceSelect').value;
     const timeRange = document.getElementById('timeRangeSelect').value;
+    const metric = document.getElementById('metricSelect').value;
     
     if (!deviceId) {
         alert('请选择设备');
         return;
     }
     
-    window.open(`/web/api/chart-data?device_id=${deviceId}&time_range=${timeRange}&export=${format}`);
+    window.open(`/web/api/chart-data?device_id=${deviceId}&time_range=${timeRange}&metric=${metric}&export=${format}`);
 }
 
 // 表单提交事件
@@ -318,6 +348,10 @@ document.getElementById('chartFilterForm').addEventListener('submit', function(e
 // 页面加载完成后初始化
 document.addEventListener('DOMContentLoaded', function() {
     initChart();
+    
+    // 初始化统计卡片显示
+    const selectedMetric = document.getElementById('metricSelect').value;
+    updateStatisticsCards(selectedMetric);
     
     // 如果有选中的设备，自动加载数据
     const selectedDevice = document.getElementById('deviceSelect').value;

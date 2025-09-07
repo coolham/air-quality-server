@@ -15,7 +15,6 @@ import (
 type SensorDataHandler struct {
 	dataRepo   repositories.UnifiedSensorDataRepository
 	deviceRepo repositories.DeviceRepository
-	statusRepo repositories.DeviceRuntimeStatusRepository
 	alertSvc   services.AlertService
 	logger     utils.Logger
 }
@@ -24,14 +23,12 @@ type SensorDataHandler struct {
 func NewSensorDataHandler(
 	dataRepo repositories.UnifiedSensorDataRepository,
 	deviceRepo repositories.DeviceRepository,
-	statusRepo repositories.DeviceRuntimeStatusRepository,
 	alertSvc services.AlertService,
 	logger utils.Logger,
 ) *SensorDataHandler {
 	return &SensorDataHandler{
 		dataRepo:   dataRepo,
 		deviceRepo: deviceRepo,
-		statusRepo: statusRepo,
 		alertSvc:   alertSvc,
 		logger:     logger,
 	}
@@ -126,13 +123,6 @@ func (h *SensorDataHandler) HandleMessage(topic string, payload []byte) error {
 		return err
 	}
 
-	// 更新设备状态
-	if err := h.updateDeviceStatus(ctx, msg.DeviceID, sensorData); err != nil {
-		h.logger.Error("更新设备状态失败",
-			utils.String("device_id", msg.DeviceID),
-			utils.ErrorField(err))
-	}
-
 	// 检查告警
 	if err := h.checkAlerts(ctx, sensorData); err != nil {
 		h.logger.Error("检查告警失败",
@@ -148,43 +138,6 @@ func (h *SensorDataHandler) HandleMessage(topic string, payload []byte) error {
 		utils.Float64("formaldehyde", getFloatValue(sensorData.Formaldehyde)))
 
 	return nil
-}
-
-// updateDeviceStatus 更新设备状态
-func (h *SensorDataHandler) updateDeviceStatus(ctx context.Context, deviceID string, data *models.UnifiedSensorData) error {
-	status := &models.DeviceRuntimeStatus{
-		DeviceID:      deviceID,
-		Online:        true,
-		LastDataTime:  &data.Timestamp,
-		LastHeartbeat: time.Now(),
-	}
-
-	if data.Battery != nil {
-		status.BatteryLevel = data.Battery
-	}
-	if data.SignalStrength != nil {
-		status.SignalStrength = data.SignalStrength
-	}
-
-	// 检查设备是否存在
-	existing, err := h.statusRepo.GetByDeviceID(ctx, deviceID)
-	if err != nil {
-		// 设备不存在，创建新记录
-		return h.statusRepo.Create(ctx, status)
-	}
-
-	// 更新现有记录
-	existing.Online = true
-	existing.LastDataTime = &data.Timestamp
-	existing.LastHeartbeat = time.Now()
-	if data.Battery != nil {
-		existing.BatteryLevel = data.Battery
-	}
-	if data.SignalStrength != nil {
-		existing.SignalStrength = data.SignalStrength
-	}
-
-	return h.statusRepo.Update(ctx, existing.ID, existing)
 }
 
 // checkAlerts 检查告警
@@ -222,91 +175,6 @@ func (h *SensorDataHandler) checkAlerts(ctx context.Context, data *models.Unifie
 	}
 
 	return h.alertSvc.CreateAlert(ctx, alert)
-}
-
-// DeviceStatusHandler 设备状态处理器
-type DeviceStatusHandler struct {
-	statusRepo repositories.DeviceRuntimeStatusRepository
-	logger     utils.Logger
-}
-
-// NewDeviceStatusHandler 创建设备状态处理器
-func NewDeviceStatusHandler(
-	statusRepo repositories.DeviceRuntimeStatusRepository,
-	logger utils.Logger,
-) *DeviceStatusHandler {
-	return &DeviceStatusHandler{
-		statusRepo: statusRepo,
-		logger:     logger,
-	}
-}
-
-// HandleMessage 处理设备状态消息
-func (h *DeviceStatusHandler) HandleMessage(topic string, payload []byte) error {
-	var msg models.DeviceStatusMessage
-	if err := json.Unmarshal(payload, &msg); err != nil {
-		h.logger.Error("解析设备状态消息失败", utils.ErrorField(err))
-		return err
-	}
-
-	// 验证必要字段
-	if msg.DeviceID == "" {
-		return fmt.Errorf("设备ID不能为空")
-	}
-
-	// 转换时间戳
-	timestamp := time.Unix(msg.Timestamp, 0)
-
-	// 创建设备状态记录
-	status := &models.DeviceRuntimeStatus{
-		DeviceID:      msg.DeviceID,
-		Online:        msg.Status.Online,
-		LastHeartbeat: timestamp,
-		ErrorCode:     msg.Status.ErrorCode,
-		ErrorMessage:  msg.Status.ErrorMessage,
-	}
-
-	if msg.Status.BatteryLevel != nil {
-		status.BatteryLevel = msg.Status.BatteryLevel
-	}
-	if msg.Status.SignalStrength != nil {
-		status.SignalStrength = msg.Status.SignalStrength
-	}
-	if msg.Status.LastDataTime != nil {
-		lastDataTime := time.Unix(*msg.Status.LastDataTime, 0)
-		status.LastDataTime = &lastDataTime
-	}
-	if msg.Firmware != nil {
-		status.FirmwareVersion = msg.Firmware.Version
-	}
-
-	// 保存或更新设备状态
-	ctx := context.Background()
-	existing, err := h.statusRepo.GetByDeviceID(ctx, msg.DeviceID)
-	if err != nil {
-		// 设备不存在，创建新记录
-		return h.statusRepo.Create(ctx, status)
-	}
-
-	// 更新现有记录
-	existing.Online = status.Online
-	existing.LastHeartbeat = status.LastHeartbeat
-	existing.ErrorCode = status.ErrorCode
-	existing.ErrorMessage = status.ErrorMessage
-	if status.BatteryLevel != nil {
-		existing.BatteryLevel = status.BatteryLevel
-	}
-	if status.SignalStrength != nil {
-		existing.SignalStrength = status.SignalStrength
-	}
-	if status.LastDataTime != nil {
-		existing.LastDataTime = status.LastDataTime
-	}
-	if status.FirmwareVersion != "" {
-		existing.FirmwareVersion = status.FirmwareVersion
-	}
-
-	return h.statusRepo.Update(ctx, existing.ID, existing)
 }
 
 // getFloatValue 安全获取浮点数值

@@ -6,10 +6,10 @@ services:
     image: mysql:8.0
     container_name: air-quality-mysql
     environment:
-      MYSQL_ROOT_PASSWORD: root123
+      MYSQL_ROOT_PASSWORD: admin
       MYSQL_DATABASE: air_quality
-      MYSQL_USER: air_quality
-      MYSQL_PASSWORD: air_quality123
+      MYSQL_USER: root
+      MYSQL_PASSWORD: admin
     ports:
       - "3306:3306"
     volumes:
@@ -17,8 +17,13 @@ services:
       - ./scripts/init.sql:/docker-entrypoint-initdb.d/init.sql
     networks:
       - air-quality-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
 
-  # Redis 缓存和消息队列
+  # Redis 缓存
   redis:
     image: redis:7.0-alpine
     container_name: air-quality-redis
@@ -28,93 +33,11 @@ services:
       - redis_data:/data
     networks:
       - air-quality-network
-
-
-  # Consul 服务发现
-  consul:
-    image: consul:1.16
-    container_name: air-quality-consul
-    ports:
-      - "8500:8500"
-    command: agent -server -bootstrap-expect=1 -client=0.0.0.0 -ui
-    volumes:
-      - consul_data:/consul/data
-    networks:
-      - air-quality-network
-
-  # Prometheus 监控
-  prometheus:
-    image: prom/prometheus:latest
-    container_name: air-quality-prometheus
-    ports:
-      - "9090:9090"
-    volumes:
-      - ./config/prometheus.yml:/etc/prometheus/prometheus.yml
-      - prometheus_data:/prometheus
-    command:
-      - '--config.file=/etc/prometheus/prometheus.yml'
-      - '--storage.tsdb.path=/prometheus'
-      - '--web.console.libraries=/etc/prometheus/console_libraries'
-      - '--web.console.templates=/etc/prometheus/consoles'
-      - '--storage.tsdb.retention.time=200h'
-      - '--web.enable-lifecycle'
-    networks:
-      - air-quality-network
-
-  # Grafana 可视化
-  grafana:
-    image: grafana/grafana:latest
-    container_name: air-quality-grafana
-    ports:
-      - "3000:3000"
-    environment:
-      GF_SECURITY_ADMIN_PASSWORD: admin123
-    volumes:
-      - grafana_data:/var/lib/grafana
-      - ./config/grafana/dashboards:/etc/grafana/provisioning/dashboards
-      - ./config/grafana/datasources:/etc/grafana/provisioning/datasources
-    networks:
-      - air-quality-network
-
-  # Elasticsearch 日志存储
-  elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:8.8.0
-    container_name: air-quality-elasticsearch
-    environment:
-      - discovery.type=single-node
-      - xpack.security.enabled=false
-      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
-    ports:
-      - "9200:9200"
-    volumes:
-      - elasticsearch_data:/usr/share/elasticsearch/data
-    networks:
-      - air-quality-network
-
-  # Kibana 日志可视化
-  kibana:
-    image: docker.elastic.co/kibana/kibana:8.8.0
-    container_name: air-quality-kibana
-    depends_on:
-      - elasticsearch
-    ports:
-      - "5601:5601"
-    environment:
-      ELASTICSEARCH_HOSTS: http://elasticsearch:9200
-    networks:
-      - air-quality-network
-
-  # Logstash 日志处理
-  logstash:
-    image: docker.elastic.co/logstash/logstash:8.8.0
-    container_name: air-quality-logstash
-    depends_on:
-      - elasticsearch
-    volumes:
-      - ./config/logstash/pipeline:/usr/share/logstash/pipeline
-      - ./config/logstash/config:/usr/share/logstash/config
-    networks:
-      - air-quality-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      timeout: 3s
+      retries: 5
 
   # 空气质量监测应用
   air-quality-server:
@@ -122,30 +45,37 @@ services:
     container_name: air-quality-server
     ports:
       - "8080:8080"
+      - "1883:1883"  # MQTT端口
     environment:
-      - CONFIG_FILE=config/config.yaml
+      - CONFIG_FILE=config/config.docker.yaml
       - DB_HOST=mysql
       - DB_PORT=3306
-      - DB_USERNAME=air_quality
-      - DB_PASSWORD=air_quality123
+      - DB_USERNAME=root
+      - DB_PASSWORD=admin
       - DB_NAME=air_quality
       - REDIS_HOST=redis
       - REDIS_PORT=6379
+      - REDIS_PASSWORD=
     depends_on:
-      - mysql
-      - redis
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     volumes:
       - ./config:/app/config
+      - ./logs:/app/logs
     networks:
       - air-quality-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/health"]
+      timeout: 10s
+      retries: 3
+      start_period: 30s
 
 volumes:
   mysql_data:
   redis_data:
-  consul_data:
-  prometheus_data:
-  grafana_data:
-  elasticsearch_data:
 
 networks:
   air-quality-network:

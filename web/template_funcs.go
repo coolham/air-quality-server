@@ -15,6 +15,9 @@ var TemplateFuncs = map[string]interface{}{
 	"contains":   contains,
 	"join":       join,
 	"deref":      deref,
+	"gt":         gt,
+	"lt":         lt,
+	"eq":         eq,
 }
 
 // buildQuery 构建查询参数
@@ -76,6 +79,63 @@ func deref(ptr interface{}) interface{} {
 	}
 
 	return ptr
+}
+
+// gt 大于比较
+func gt(a, b interface{}) bool {
+	return compareNumbers(a, b) > 0
+}
+
+// lt 小于比较
+func lt(a, b interface{}) bool {
+	return compareNumbers(a, b) < 0
+}
+
+// eq 等于比较
+func eq(a, b interface{}) bool {
+	// 首先尝试字符串比较
+	if aStr, ok := a.(string); ok {
+		if bStr, ok := b.(string); ok {
+			return aStr == bStr
+		}
+	}
+	// 然后尝试数字比较
+	return compareNumbers(a, b) == 0
+}
+
+// compareNumbers 比较数字
+func compareNumbers(a, b interface{}) int {
+	// 转换为float64进行比较
+	var aFloat, bFloat float64
+
+	switch v := a.(type) {
+	case float64:
+		aFloat = v
+	case int:
+		aFloat = float64(v)
+	case int64:
+		aFloat = float64(v)
+	default:
+		return 0
+	}
+
+	switch v := b.(type) {
+	case float64:
+		bFloat = v
+	case int:
+		bFloat = float64(v)
+	case int64:
+		bFloat = float64(v)
+	default:
+		return 0
+	}
+
+	if aFloat > bFloat {
+		return 1
+	} else if aFloat < bFloat {
+		return -1
+	}
+	return 0
 }
 
 // toString 转换为字符串

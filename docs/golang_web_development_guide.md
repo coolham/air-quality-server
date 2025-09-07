@@ -604,3 +604,140 @@ curl -v http://127.0.0.1:8080/devices
 5. **错误处理**：完善的错误处理和调试机制
 
 遵循这些最佳实践，可以构建出结构清晰、易于维护的Golang Web应用程序。
+
+## 常见问题与解决方案
+
+### 问题1：模板条件判断失效
+
+#### 问题描述
+所有页面都显示相同内容，模板条件判断`{{if eq .CurrentPage "devices"}}`不生效。
+
+#### 根本原因
+模板函数`eq`只支持数字比较，不支持字符串比较：
+
+```go
+// 问题代码
+func eq(a, b interface{}) bool {
+    return compareNumbers(a, b) == 0  // 只支持数字比较
+}
+```
+
+#### 解决方案
+修改`eq`函数支持字符串比较：
+
+```go
+// 修复后的代码
+func eq(a, b interface{}) bool {
+    // 首先尝试字符串比较
+    if aStr, ok := a.(string); ok {
+        if bStr, ok := b.(string); ok {
+            return aStr == bStr
+        }
+    }
+    // 然后尝试数字比较
+    return compareNumbers(a, b) == 0
+}
+```
+
+#### 预防措施
+1. 模板函数设计时要考虑多种数据类型
+2. 编写单元测试验证模板函数功能
+3. 使用类型断言确保类型安全
+
+### 问题2：MQTT配置解析错误
+
+#### 问题描述
+应用程序启动时MQTT服务器启动失败，错误信息：`listen tcp: lookup tcp///localhost: unknown port`
+
+#### 根本原因
+Broker地址解析逻辑有缺陷，无法正确处理`tcp://localhost:1883`格式：
+
+```go
+// 问题代码
+parts := strings.Split(s.config.Broker, ":")
+if len(parts) > 1 {
+    port = parts[1]  // 对于"tcp://localhost:1883"，parts[1]是"//localhost"
+}
+```
+
+#### 解决方案
+添加协议前缀处理：
+
+```go
+// 修复后的代码
+if strings.HasPrefix(s.config.Broker, "tcp://") {
+    broker := strings.TrimPrefix(s.config.Broker, "tcp://")
+    parts := strings.Split(broker, ":")
+    if len(parts) > 1 {
+        port = parts[1]
+    }
+} else {
+    parts := strings.Split(s.config.Broker, ":")
+    if len(parts) > 1 {
+        port = parts[1]
+    }
+}
+```
+
+#### 预防措施
+1. 配置解析要考虑多种格式
+2. 添加输入验证和错误处理
+3. 编写配置解析的单元测试
+
+### 问题3：模板文件格式问题
+
+#### 问题描述
+模板文件开头有多余空行，可能影响模板解析。
+
+#### 解决方案
+1. 清理模板文件格式
+2. 使用代码格式化工具
+3. 建立代码审查流程
+
+### 调试技巧
+
+#### 1. 模板调试
+```go
+// 创建简单的测试模板验证函数
+func testTemplate() {
+    funcs := template.FuncMap{
+        "eq": func(a, b interface{}) bool {
+            return a == b
+        },
+    }
+    
+    tmpl := `{{if eq .CurrentPage "devices"}}设备内容{{else}}其他内容{{end}}`
+    t, _ := template.New("test").Funcs(funcs).Parse(tmpl)
+    
+    data := map[string]interface{}{
+        "CurrentPage": "devices",
+    }
+    
+    t.Execute(os.Stdout, data)  // 输出：设备内容
+}
+```
+
+#### 2. 网络调试
+```bash
+# 检查端口占用
+netstat -ano | findstr :8080
+
+# 终止进程
+taskkill /F /PID <进程ID>
+```
+
+#### 3. 配置验证
+```go
+// 添加配置验证日志
+logger.Info("MQTT配置", 
+    zap.String("broker", config.Broker),
+    zap.String("parsed_port", port))
+```
+
+### 最佳实践总结
+
+1. **模板函数设计**：支持多种数据类型，提供类型安全的比较函数
+2. **配置解析**：考虑多种格式，添加输入验证
+3. **错误处理**：提供详细的错误信息和调试日志
+4. **测试覆盖**：为关键功能编写单元测试
+5. **代码审查**：建立代码审查流程，避免格式问题

@@ -218,13 +218,12 @@ func loadConfig() (*config.Config, error) {
 // initRepositories 初始化仓储层
 func initRepositories(db *gorm.DB, logger utils.Logger) *repositories.Repositories {
 	return &repositories.Repositories{
-		Device:              repositories.NewDeviceRepository(db, logger),
-		AirQuality:          repositories.NewAirQualityRepository(db, logger),
-		UnifiedSensorData:   repositories.NewUnifiedSensorDataRepository(db, logger),
-		DeviceRuntimeStatus: repositories.NewDeviceRuntimeStatusRepository(db, logger),
-		User:                repositories.NewUserRepository(db, logger),
-		Alert:               repositories.NewAlertRepository(db, logger),
-		Config:              repositories.NewConfigRepository(db, logger),
+		Device:            repositories.NewDeviceRepository(db, logger),
+		AirQuality:        repositories.NewAirQualityRepository(db, logger),
+		UnifiedSensorData: repositories.NewUnifiedSensorDataRepository(db, logger),
+		User:              repositories.NewUserRepository(db, logger),
+		Alert:             repositories.NewAlertRepository(db, logger),
+		Config:            repositories.NewConfigRepository(db, logger),
 	}
 }
 
@@ -252,7 +251,6 @@ func initMQTTServer(cfg *config.Config, logger utils.Logger, repos *repositories
 	sensorDataHandler := mqtt.NewSensorDataHandler(
 		repos.UnifiedSensorData,
 		repos.Device,
-		repos.DeviceRuntimeStatus,
 		svcs.Alert,
 		logger,
 	)

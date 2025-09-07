@@ -166,9 +166,6 @@ func getAllModels() []interface{} {
 		&models.Alert{},
 		&models.AlertRule{},
 		&models.SystemConfig{},
-		&models.FormaldehydeData{},
-		&models.FormaldehydeDeviceStatus{},
-		&models.FormaldehydeDeviceConfig{},
 	}
 }
 

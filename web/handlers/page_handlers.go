@@ -305,16 +305,27 @@ func (h *WebHandlers) DataView(c *gin.Context) {
 func (h *WebHandlers) Charts(c *gin.Context) {
 	ctx := context.Background()
 
-	// 获取设备列表
-	devices, err := h.services.Device.ListDevices(ctx, 100, 0)
+	// 获取设备列表（从传感器数据中获取）
+	deviceIDs, err := h.services.UnifiedSensorData.GetDeviceIDs(ctx)
 	if err != nil {
 		h.logger.Error("获取设备列表失败", utils.ErrorField(err))
-		devices = []models.Device{}
+		deviceIDs = []string{}
+	}
+
+	// 转换为设备对象列表
+	var devices []models.Device
+	for _, deviceID := range deviceIDs {
+		devices = append(devices, models.Device{
+			ID:   deviceID,
+			Name: deviceID, // 使用设备ID作为名称
+			Type: "sensor", // 默认类型
+		})
 	}
 
 	// 获取查询参数
 	deviceID := c.Query("device_id")
 	timeRange := c.DefaultQuery("time_range", "24") // 默认24小时
+	metric := c.DefaultQuery("metric", "all")       // 默认显示全部指标
 
 	var chartData *ChartData
 	if deviceID != "" {
@@ -323,14 +334,14 @@ func (h *WebHandlers) Charts(c *gin.Context) {
 		endTime := time.Now()
 		startTime := endTime.Add(-time.Duration(hours) * time.Hour)
 
-		historyData, err := h.services.AirQuality.GetDataByTimeRange(ctx, deviceID, startTime.Unix(), endTime.Unix())
+		historyData, err := h.services.UnifiedSensorData.GetDataByTimeRange(ctx, deviceID, startTime.Unix(), endTime.Unix())
 		if err != nil {
 			h.logger.Error("获取图表数据失败", utils.ErrorField(err))
-			historyData = []models.AirQualityData{}
+			historyData = []models.UnifiedSensorData{}
 		}
 
 		// 转换为图表数据格式
-		chartData = h.convertToChartData(historyData)
+		chartData = h.convertToChartDataFromUnified(historyData, metric)
 	}
 
 	data := gin.H{
@@ -338,6 +349,7 @@ func (h *WebHandlers) Charts(c *gin.Context) {
 		"CurrentPage":    "charts",
 		"Devices":        devices,
 		"SelectedDevice": deviceID,
+		"SelectedMetric": metric,
 		"TimeRange":      timeRange,
 		"ChartData":      chartData,
 	}

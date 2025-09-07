@@ -41,6 +41,9 @@ type UnifiedSensorDataService interface {
 
 	// 获取所有设备数据
 	GetAllData(ctx context.Context, limit, offset int) ([]models.UnifiedSensorData, error)
+
+	// 获取设备ID列表
+	GetDeviceIDs(ctx context.Context) ([]string, error)
 }
 
 // unifiedSensorDataService 统一传感器数据服务实现
@@ -340,6 +343,11 @@ func (s *unifiedSensorDataService) GetSensorIDs(ctx context.Context, deviceID st
 // GetAllData 获取所有设备数据
 func (s *unifiedSensorDataService) GetAllData(ctx context.Context, limit, offset int) ([]models.UnifiedSensorData, error) {
 	return s.dataRepo.GetAllData(ctx, limit, offset)
+}
+
+// GetDeviceIDs 从传感器数据中获取设备ID列表
+func (s *unifiedSensorDataService) GetDeviceIDs(ctx context.Context) ([]string, error) {
+	return s.dataRepo.GetDeviceIDs(ctx)
 }
 
 // 辅助方法

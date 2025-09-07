@@ -87,27 +87,46 @@ func (s *Server) Start() error {
 		utils.String("description", "处理MQTT消息和事件"))
 
 	// 添加TCP监听器（端口1883）
+	// 从配置中解析端口
+	port := "1883" // 默认端口
+	if s.config.Broker != "" {
+		// 处理 tcp://host:port 格式
+		if strings.HasPrefix(s.config.Broker, "tcp://") {
+			broker := strings.TrimPrefix(s.config.Broker, "tcp://")
+			parts := strings.Split(broker, ":")
+			if len(parts) > 1 {
+				port = parts[1]
+			}
+		} else {
+			// 处理 host:port 格式
+			parts := strings.Split(s.config.Broker, ":")
+			if len(parts) > 1 {
+				port = parts[1]
+			}
+		}
+	}
+
 	s.logger.Debug("🌐 正在创建TCP监听器...")
 	tcp := listeners.NewTCP(listeners.Config{
 		ID:      "tcp1",
-		Address: ":1883",
+		Address: ":" + port,
 	})
 	s.logger.Info("✅ TCP监听器已创建",
 		utils.String("listener_id", "tcp1"),
-		utils.String("address", ":1883"),
+		utils.String("address", ":"+port),
 		utils.String("protocol", "TCP"),
-		utils.String("port", "1883"))
+		utils.String("port", port))
 
 	if err := s.server.AddListener(tcp); err != nil {
 		s.logger.Error("❌ 添加TCP监听器失败",
 			utils.String("listener_id", "tcp1"),
-			utils.String("address", ":1883"),
+			utils.String("address", ":"+port),
 			utils.ErrorField(err))
 		return fmt.Errorf("添加TCP监听器失败: %w", err)
 	}
 	s.logger.Info("✅ TCP监听器已添加到服务器",
 		utils.String("listener_id", "tcp1"),
-		utils.String("address", ":1883"),
+		utils.String("address", ":"+port),
 		utils.String("status", "ready"))
 
 	// 启动服务器

@@ -1,0 +1,91 @@
+# 空气质量监测系统 - 开发环境配置文件
+
+# 服务器配置
+server:
+  port: 8080
+  host: "127.0.0.1"
+  read_timeout: 30
+  write_timeout: 30
+  idle_timeout: 120
+
+# 数据库配置
+database:
+  host: "192.168.3.24"  # 开发环境数据库地址
+  port: 3306
+  username: "root"
+  password: "admin"
+  database: "air_quality"
+  charset: "utf8mb4"
+  max_idle: 5
+  max_open: 50
+  max_life: 3600
+
+# Redis配置
+redis:
+  host: "192.168.3.24"  # 开发环境Redis地址
+  port: 6379
+  password: "123456"
+  db: 0
+  pool_size: 5
+
+# MQTT配置
+mqtt:
+  broker: "127.0.0.1:1883"  # 本地MQTT服务
+  client_id: "air-quality-server-dev"
+  keep_alive: 60
+  qos: 1
+  clean_session: true
+  auto_reconnect: true
+  connect_timeout: 30
+
+# JWT配置
+jwt:
+  secret: "air-quality-dev-secret-key"
+  expire_hours: 24
+  issuer: "air-quality-server-dev"
+
+# 日志配置
+log:
+  level: "debug"  # 开发环境使用debug级别
+  format: "json"
+  output: "stdout"
+  max_size: 100
+  max_backups: 3
+  max_age: 7
+  compress: true
+
+# 服务配置
+service:
+  name: "air-quality-server"
+  version: "1.0.0-dev"
+  environment: "development"
+  debug: true  # 开发环境启用调试
+
+# 告警配置
+alert:
+  enabled: true
+  thresholds:
+    pm25:
+      warning: 35
+      critical: 75
+    pm10:
+      warning: 50
+      critical: 150
+    formaldehyde:
+      warning: 0.05
+      critical: 0.1
+    co2:
+      warning: 1000
+      critical: 2000
+    temperature:
+      warning: 30
+      critical: 35
+    humidity:
+      warning: 80
+      critical: 90
+
+# 数据存储配置
+storage:
+  retention_days: 7  # 开发环境保留7天数据
+  cleanup_interval: 24
+  batch_size: 100

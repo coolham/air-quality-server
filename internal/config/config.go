@@ -101,9 +101,8 @@ type MQTTConfig struct {
 
 // TopicConfig 主题配置
 type TopicConfig struct {
-	FormaldehydeData string `mapstructure:"formaldehyde_data"`
-	DeviceStatus     string `mapstructure:"device_status"`
-	DeviceResponse   string `mapstructure:"device_response"`
+	DeviceStatus   string `mapstructure:"device_status"`
+	DeviceResponse string `mapstructure:"device_response"`
 }
 
 // MessageConfig 消息配置

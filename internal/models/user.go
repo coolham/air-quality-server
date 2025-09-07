@@ -13,7 +13,7 @@ type User struct {
 	Email        string         `json:"email" gorm:"type:varchar(100);uniqueIndex;not null"`
 	Phone        *string        `json:"phone" gorm:"type:varchar(20)"`
 	PasswordHash string         `json:"-" gorm:"type:varchar(255);not null"`
-	Status       string         `json:"status" gorm:"type:enum('active','inactive','suspended');default:'active'"`
+	Status       string         `json:"status" gorm:"type:varchar(20);default:'active'"`
 	LastLoginAt  *time.Time     `json:"last_login_at"`
 	CreatedAt    time.Time      `json:"created_at" gorm:"autoCreateTime"`
 	UpdatedAt    time.Time      `json:"updated_at" gorm:"autoUpdateTime"`

@@ -12,10 +12,10 @@ type AlertRule struct {
 	Name                 string         `json:"name" gorm:"type:varchar(100);not null"`
 	DeviceID             *string        `json:"device_id" gorm:"type:varchar(64);index"`
 	Metric               string         `json:"metric" gorm:"type:varchar(50);not null"`
-	ConditionType        string         `json:"condition_type" gorm:"type:enum('gt','lt','eq','ne','gte','lte');not null"`
+	ConditionType        string         `json:"condition_type" gorm:"type:varchar(10);not null"`
 	ThresholdValue       float64        `json:"threshold_value" gorm:"type:decimal(10,2);not null"`
 	DurationSeconds      int            `json:"duration_seconds" gorm:"default:0"`
-	Severity             string         `json:"severity" gorm:"type:enum('critical','warning','info');default:'warning'"`
+	Severity             string         `json:"severity" gorm:"type:varchar(20);default:'warning'"`
 	Enabled              bool           `json:"enabled" gorm:"default:true"`
 	NotificationChannels *string        `json:"notification_channels" gorm:"type:json"`
 	CreatedAt            time.Time      `json:"created_at" gorm:"autoCreateTime"`
@@ -36,8 +36,8 @@ type Alert struct {
 	Metric         string         `json:"metric" gorm:"type:varchar(50);not null"`
 	CurrentValue   float64        `json:"current_value" gorm:"type:decimal(10,2);not null"`
 	ThresholdValue float64        `json:"threshold_value" gorm:"type:decimal(10,2);not null"`
-	Severity       string         `json:"severity" gorm:"type:enum('critical','warning','info');not null"`
-	Status         string         `json:"status" gorm:"type:enum('active','acknowledged','resolved');default:'active'"`
+	Severity       string         `json:"severity" gorm:"type:varchar(20);not null"`
+	Status         string         `json:"status" gorm:"type:varchar(20);default:'active'"`
 	TriggeredAt    time.Time      `json:"triggered_at" gorm:"not null;index"`
 	AcknowledgedAt *time.Time     `json:"acknowledged_at"`
 	ResolvedAt     *time.Time     `json:"resolved_at"`

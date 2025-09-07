@@ -11,7 +11,7 @@ import (
 func TestNewServer(t *testing.T) {
 	// 创建测试配置
 	cfg := &config.MQTTConfig{
-		Broker:         "localhost:1883",
+		Broker:         "localhost:1884",
 		ClientID:       "test-client",
 		KeepAlive:      60,
 		CleanSession:   true,
@@ -58,7 +58,7 @@ func TestNewServer(t *testing.T) {
 func TestServerStartStop(t *testing.T) {
 	// 创建测试配置
 	cfg := &config.MQTTConfig{
-		Broker:         "localhost:1883",
+		Broker:         "localhost:1884", // 使用不同端口避免冲突
 		ClientID:       "test-client",
 		KeepAlive:      60,
 		CleanSession:   true,
@@ -83,7 +83,7 @@ func TestServerStartStop(t *testing.T) {
 	}
 
 	// 等待服务器启动
-	time.Sleep(100 * time.Millisecond)
+	time.Sleep(500 * time.Millisecond)
 
 	// 验证服务器状态
 	if !server.IsRunning() {
@@ -106,7 +106,7 @@ func TestServerStartStop(t *testing.T) {
 func TestServerPublish(t *testing.T) {
 	// 创建测试配置
 	cfg := &config.MQTTConfig{
-		Broker:         "localhost:1883",
+		Broker:         "localhost:1884",
 		ClientID:       "test-client",
 		KeepAlive:      60,
 		CleanSession:   true,
@@ -137,7 +137,7 @@ func TestServerPublish(t *testing.T) {
 	}
 
 	// 等待服务器启动
-	time.Sleep(100 * time.Millisecond)
+	time.Sleep(500 * time.Millisecond)
 
 	// 测试发布字符串消息
 	err = server.Publish("test/topic", "test message")
@@ -169,7 +169,7 @@ func TestServerPublish(t *testing.T) {
 func TestServerGetStatus(t *testing.T) {
 	// 创建测试配置
 	cfg := &config.MQTTConfig{
-		Broker:         "localhost:1883",
+		Broker:         "localhost:1884",
 		ClientID:       "test-client",
 		KeepAlive:      60,
 		CleanSession:   true,
@@ -200,7 +200,7 @@ func TestServerGetStatus(t *testing.T) {
 	}
 
 	// 等待服务器启动
-	time.Sleep(100 * time.Millisecond)
+	time.Sleep(500 * time.Millisecond)
 
 	// 测试启动状态
 	status = server.GetStatus()
@@ -369,7 +369,7 @@ func BenchmarkIsSensorDataTopic(b *testing.B) {
 // BenchmarkServerStartStop 性能测试
 func BenchmarkServerStartStop(b *testing.B) {
 	cfg := &config.MQTTConfig{
-		Broker:         "localhost:1883",
+		Broker:         "localhost:1884",
 		ClientID:       "test-client",
 		KeepAlive:      60,
 		CleanSession:   true,

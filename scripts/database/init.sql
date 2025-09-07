@@ -179,60 +179,6 @@ CREATE TABLE IF NOT EXISTS device_runtime_status (
     FOREIGN KEY (device_id) REFERENCES devices(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='设备运行时状态表';
 
--- 甲醛数据表（兼容性保留）
-CREATE TABLE IF NOT EXISTS formaldehyde_data (
-    id BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '数据ID',
-    device_id VARCHAR(64) NOT NULL COMMENT '设备ID',
-    timestamp TIMESTAMP NOT NULL COMMENT '数据时间戳',
-    formaldehyde DECIMAL(8, 2) COMMENT '甲醛浓度',
-    temperature DECIMAL(6, 2) COMMENT '温度',
-    humidity DECIMAL(6, 2) COMMENT '湿度',
-    battery DECIMAL(5, 2) COMMENT '电池电量',
-    quality_score DECIMAL(4, 2) COMMENT '数据质量评分',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-    INDEX idx_device_timestamp (device_id, timestamp),
-    INDEX idx_timestamp (timestamp),
-    INDEX idx_device_id (device_id),
-    FOREIGN KEY (device_id) REFERENCES devices(id) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='甲醛数据表';
-
--- 甲醛设备状态表
-CREATE TABLE IF NOT EXISTS formaldehyde_device_status (
-    id BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '状态ID',
-    device_id VARCHAR(64) NOT NULL COMMENT '设备ID',
-    device_type VARCHAR(50) DEFAULT 'hcho' COMMENT '设备类型',
-    status ENUM('online', 'offline', 'maintenance') DEFAULT 'offline' COMMENT '设备状态',
-    last_data_time TIMESTAMP NULL COMMENT '最后数据时间',
-    formaldehyde_value DECIMAL(8, 2) COMMENT '当前甲醛值',
-    temperature_value DECIMAL(6, 2) COMMENT '当前温度值',
-    humidity_value DECIMAL(6, 2) COMMENT '当前湿度值',
-    battery_level DECIMAL(5, 2) COMMENT '电池电量',
-    signal_strength INT COMMENT '信号强度',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
-    UNIQUE KEY uk_device_id (device_id),
-    INDEX idx_status (status),
-    INDEX idx_device_type (device_type),
-    FOREIGN KEY (device_id) REFERENCES devices(id) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='甲醛设备状态表';
-
--- 甲醛设备配置表
-CREATE TABLE IF NOT EXISTS formaldehyde_device_config (
-    id BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '配置ID',
-    device_id VARCHAR(64) NOT NULL COMMENT '设备ID',
-    report_interval INT DEFAULT 60 COMMENT '上报间隔(秒)',
-    alert_threshold DECIMAL(8, 2) DEFAULT 0.08 COMMENT '告警阈值',
-    calibration_offset DECIMAL(8, 2) DEFAULT 0.0 COMMENT '校准偏移',
-    temperature_compensation BOOLEAN DEFAULT TRUE COMMENT '温度补偿',
-    humidity_compensation BOOLEAN DEFAULT TRUE COMMENT '湿度补偿',
-    auto_calibration BOOLEAN DEFAULT FALSE COMMENT '自动校准',
-    calibration_interval INT DEFAULT 86400 COMMENT '校准间隔(秒)',
-    data_quality_check BOOLEAN DEFAULT TRUE COMMENT '数据质量检查',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
-    UNIQUE KEY uk_device_id (device_id),
-    FOREIGN KEY (device_id) REFERENCES devices(id) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='甲醛设备配置表';
 
 -- 插入默认角色
 INSERT IGNORE INTO roles (name, description, permissions) VALUES 
@@ -282,22 +228,11 @@ CREATE TABLE IF NOT EXISTS schema_migrations (
 -- 插入初始版本
 INSERT IGNORE INTO schema_migrations (version) VALUES ('20240907000001');
 
--- 插入示例甲醛设备状态
-INSERT IGNORE INTO formaldehyde_device_status (device_id, device_type, status, formaldehyde_value, temperature_value, humidity_value, battery_level, signal_strength) VALUES 
-('HCHO_001', 'hcho', 'online', 0.05, 22.5, 45.0, 85.0, -65),
-('HCHO_002', 'hcho', 'online', 0.03, 24.1, 52.0, 92.0, -58);
-
--- 插入示例甲醛设备配置
-INSERT IGNORE INTO formaldehyde_device_config (device_id, report_interval, alert_threshold, calibration_offset, temperature_compensation, humidity_compensation) VALUES 
-('HCHO_001', 60, 0.08, 0.0, TRUE, TRUE),
-('HCHO_002', 60, 0.08, 0.0, TRUE, TRUE);
 
 -- 插入示例设备运行时状态
 INSERT IGNORE INTO device_runtime_status (device_id, status, last_seen, uptime_seconds, memory_usage, cpu_usage, network_status, firmware_version) VALUES 
 ('ESP32_001', 'online', NOW(), 86400, 45.2, 12.8, 'connected', 'v1.2.3'),
-('ESP32_002', 'online', NOW(), 172800, 38.7, 8.5, 'connected', 'v1.2.3'),
-('HCHO_001', 'online', NOW(), 43200, 52.1, 15.3, 'connected', 'v2.1.0'),
-('HCHO_002', 'online', NOW(), 64800, 48.9, 11.2, 'connected', 'v2.1.0');
+('ESP32_002', 'online', NOW(), 172800, 38.7, 8.5, 'connected', 'v1.2.3');
 
 -- 创建视图：设备实时状态
 CREATE OR REPLACE VIEW device_realtime_status AS

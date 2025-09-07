@@ -42,13 +42,15 @@ type UnifiedSensorDataRepository interface {
 
 	// 数据迁移相关方法
 	MigrateFromAirQualityData(ctx context.Context, data []models.AirQualityData) error
-	MigrateFromFormaldehydeData(ctx context.Context, data []models.FormaldehydeData) error
 
 	// 获取传感器ID列表
 	GetSensorIDs(ctx context.Context, deviceID string) ([]string, error)
 
 	// 获取所有设备数据
 	GetAllData(ctx context.Context, limit, offset int) ([]models.UnifiedSensorData, error)
+
+	// 获取设备ID列表
+	GetDeviceIDs(ctx context.Context) ([]string, error)
 }
 
 // unifiedSensorDataRepository 统一传感器数据仓库实现
@@ -295,33 +297,6 @@ func (r *unifiedSensorDataRepository) MigrateFromAirQualityData(ctx context.Cont
 	return r.BatchInsert(ctx, unifiedData)
 }
 
-// MigrateFromFormaldehydeData 从FormaldehydeData迁移数据
-func (r *unifiedSensorDataRepository) MigrateFromFormaldehydeData(ctx context.Context, data []models.FormaldehydeData) error {
-	if len(data) == 0 {
-		return nil
-	}
-
-	var unifiedData []models.UnifiedSensorData
-	for _, item := range data {
-		unified := models.UnifiedSensorData{
-			DeviceID:       item.DeviceID,
-			DeviceType:     models.DeviceTypeFormaldehyde,
-			Timestamp:      item.Timestamp,
-			Formaldehyde:   item.Formaldehyde,
-			Temperature:    item.Temperature,
-			Humidity:       item.Humidity,
-			Battery:        item.Battery,
-			SignalStrength: item.SignalStrength,
-			DataQuality:    item.DataQuality,
-			CreatedAt:      item.CreatedAt,
-			UpdatedAt:      item.UpdatedAt,
-		}
-		unifiedData = append(unifiedData, unified)
-	}
-
-	return r.BatchInsert(ctx, unifiedData)
-}
-
 // GetSensorIDs 获取传感器ID列表
 func (r *unifiedSensorDataRepository) GetSensorIDs(ctx context.Context, deviceID string) ([]string, error) {
 	var sensorIDs []string
@@ -351,4 +326,15 @@ func (r *unifiedSensorDataRepository) GetAllData(ctx context.Context, limit, off
 		Offset(offset).
 		Find(&data).Error
 	return data, err
+}
+
+// GetDeviceIDs 获取所有设备ID列表
+func (r *unifiedSensorDataRepository) GetDeviceIDs(ctx context.Context) ([]string, error) {
+	var deviceIDs []string
+	err := r.db.WithContext(ctx).
+		Model(&models.UnifiedSensorData{}).
+		Distinct("device_id").
+		Where("device_id != ''").
+		Pluck("device_id", &deviceIDs).Error
+	return deviceIDs, err
 }

@@ -20,14 +20,22 @@ type AlertStats struct {
 
 // AirQualityDataSummary 空气质量数据摘要
 type AirQualityDataSummary struct {
-	DeviceID   string    `json:"device_id"`
-	DeviceName string    `json:"device_name"`
-	PM25       float64   `json:"pm25"`
-	PM10       float64   `json:"pm10"`
-	Temp       float64   `json:"temp"`
-	Humidity   float64   `json:"humidity"`
-	CreatedAt  time.Time `json:"created_at"`
-	Status     string    `json:"status"`
+	DeviceID     string    `json:"device_id"`
+	DeviceName   string    `json:"device_name"`
+	DeviceType   string    `json:"device_type"`
+	SensorID     string    `json:"sensor_id"`
+	SensorType   string    `json:"sensor_type"`
+	PM25         float64   `json:"pm25"`
+	PM10         float64   `json:"pm10"`
+	CO2          float64   `json:"co2"`
+	Formaldehyde float64   `json:"formaldehyde"`
+	Temp         float64   `json:"temp"`
+	Humidity     float64   `json:"humidity"`
+	Pressure     float64   `json:"pressure"`
+	Battery      int       `json:"battery"`
+	DataQuality  string    `json:"data_quality"`
+	CreatedAt    time.Time `json:"created_at"`
+	Status       string    `json:"status"`
 }
 
 // Pagination 分页信息

@@ -2,15 +2,24 @@ package handlers
 
 import (
 	"air-quality-server/internal/models"
-	"air-quality-server/internal/utils"
 	"context"
 	"fmt"
+	"sort"
+	"time"
 )
 
 // getFloatValue 安全获取浮点数值
 func getFloatValue(ptr *float64) float64 {
 	if ptr == nil {
 		return 0.0
+	}
+	return *ptr
+}
+
+// getIntValueFromPointer 安全获取整数值
+func getIntValueFromPointer(ptr *int) int {
+	if ptr == nil {
+		return 0
 	}
 	return *ptr
 }
@@ -46,35 +55,54 @@ func (h *WebHandlers) getDeviceStats(ctx context.Context) (*DeviceStats, error) 
 
 // getLatestData 获取最新数据
 func (h *WebHandlers) getLatestData(ctx context.Context) ([]AirQualityDataSummary, error) {
-	// 获取所有设备
-	devices, err := h.services.Device.ListDevices(ctx, 10, 0) // 获取前10个设备
+	// 从UnifiedSensorData获取最新数据，按设备ID和传感器ID分组
+	latestData, err := h.services.UnifiedSensorData.GetAllData(ctx, 50, 0) // 获取最新50条数据
 	if err != nil {
 		return nil, err
 	}
 
-	var summaries []AirQualityDataSummary
-	for _, device := range devices {
-		// 获取设备最新数据
-		latestData, err := h.services.AirQuality.GetLatestData(ctx, device.ID)
-		if err != nil {
-			h.logger.Warn("获取设备最新数据失败", utils.String("device_id", device.ID), utils.ErrorField(err))
-			continue
-		}
-
-		if latestData != nil {
-			summary := AirQualityDataSummary{
-				DeviceID:   device.ID,
-				DeviceName: device.Name,
-				PM25:       getFloatValue(latestData.PM25),
-				PM10:       getFloatValue(latestData.PM10),
-				Temp:       getFloatValue(latestData.Temperature),
-				Humidity:   getFloatValue(latestData.Humidity),
-				CreatedAt:  latestData.CreatedAt,
-				Status:     string(device.Status),
-			}
-			summaries = append(summaries, summary)
+	// 按设备ID和传感器ID分组，获取每个组合的最新数据
+	latestByDeviceSensor := make(map[string]models.UnifiedSensorData)
+	for _, data := range latestData {
+		key := data.DeviceID + ":" + data.SensorID
+		if existing, exists := latestByDeviceSensor[key]; !exists || data.Timestamp.After(existing.Timestamp) {
+			latestByDeviceSensor[key] = data
 		}
 	}
+
+	var summaries []AirQualityDataSummary
+	for _, data := range latestByDeviceSensor {
+		// 判断设备状态（基于数据时间戳）
+		status := "online"
+		if time.Since(data.Timestamp) > 5*time.Minute {
+			status = "offline"
+		}
+
+		summary := AirQualityDataSummary{
+			DeviceID:     data.DeviceID,
+			DeviceName:   data.DeviceID, // 使用设备ID作为名称，后续可以从设备表获取真实名称
+			DeviceType:   string(data.DeviceType),
+			SensorID:     data.SensorID,
+			SensorType:   data.SensorType,
+			PM25:         getFloatValueFromPointer(data.PM25),
+			PM10:         getFloatValueFromPointer(data.PM10),
+			CO2:          getFloatValueFromPointer(data.CO2),
+			Formaldehyde: getFloatValueFromPointer(data.Formaldehyde),
+			Temp:         getFloatValueFromPointer(data.Temperature),
+			Humidity:     getFloatValueFromPointer(data.Humidity),
+			Pressure:     getFloatValueFromPointer(data.Pressure),
+			Battery:      getIntValueFromPointer(data.Battery),
+			DataQuality:  data.DataQuality,
+			CreatedAt:    data.Timestamp,
+			Status:       status,
+		}
+		summaries = append(summaries, summary)
+	}
+
+	// 按时间戳降序排序
+	sort.Slice(summaries, func(i, j int) bool {
+		return summaries[i].CreatedAt.After(summaries[j].CreatedAt)
+	})
 
 	return summaries, nil
 }
@@ -152,6 +180,98 @@ func (h *WebHandlers) convertToChartData(historyData []models.AirQualityData) *C
 	}
 }
 
+// convertToChartDataFromUnified 将统一传感器数据转换为图表数据格式，支持指标选择
+func (h *WebHandlers) convertToChartDataFromUnified(historyData []models.UnifiedSensorData, metric string) *ChartData {
+	var labels []string
+	var pm25Data, formaldehydeData, tempData, humidityData []float64
+
+	for _, data := range historyData {
+		// 格式化时间标签
+		label := data.Timestamp.Format("15:04")
+		labels = append(labels, label)
+
+		// 添加数据点
+		pm25Data = append(pm25Data, getFloatValueFromPointer(data.PM25))
+		formaldehydeData = append(formaldehydeData, getFloatValueFromPointer(data.Formaldehyde))
+		tempData = append(tempData, getFloatValueFromPointer(data.Temperature))
+		humidityData = append(humidityData, getFloatValueFromPointer(data.Humidity))
+	}
+
+	var datasets []Dataset
+
+	// 根据选择的指标添加数据集
+	switch metric {
+	case "pm25":
+		datasets = append(datasets, Dataset{
+			Label:           "PM2.5",
+			Data:            pm25Data,
+			BorderColor:     "rgb(255, 99, 132)",
+			BackgroundColor: "rgba(255, 99, 132, 0.2)",
+			Fill:            false,
+		})
+	case "formaldehyde":
+		datasets = append(datasets, Dataset{
+			Label:           "甲醛",
+			Data:            formaldehydeData,
+			BorderColor:     "rgb(220, 53, 69)",
+			BackgroundColor: "rgba(220, 53, 69, 0.2)",
+			Fill:            false,
+		})
+	case "temperature":
+		datasets = append(datasets, Dataset{
+			Label:           "温度",
+			Data:            tempData,
+			BorderColor:     "rgb(255, 205, 86)",
+			BackgroundColor: "rgba(255, 205, 86, 0.2)",
+			Fill:            false,
+		})
+	case "humidity":
+		datasets = append(datasets, Dataset{
+			Label:           "湿度",
+			Data:            humidityData,
+			BorderColor:     "rgb(75, 192, 192)",
+			BackgroundColor: "rgba(75, 192, 192, 0.2)",
+			Fill:            false,
+		})
+	default: // "all"
+		datasets = []Dataset{
+			{
+				Label:           "PM2.5",
+				Data:            pm25Data,
+				BorderColor:     "rgb(255, 99, 132)",
+				BackgroundColor: "rgba(255, 99, 132, 0.2)",
+				Fill:            false,
+			},
+			{
+				Label:           "甲醛",
+				Data:            formaldehydeData,
+				BorderColor:     "rgb(220, 53, 69)",
+				BackgroundColor: "rgba(220, 53, 69, 0.2)",
+				Fill:            false,
+			},
+			{
+				Label:           "温度",
+				Data:            tempData,
+				BorderColor:     "rgb(255, 205, 86)",
+				BackgroundColor: "rgba(255, 205, 86, 0.2)",
+				Fill:            false,
+			},
+			{
+				Label:           "湿度",
+				Data:            humidityData,
+				BorderColor:     "rgb(75, 192, 192)",
+				BackgroundColor: "rgba(75, 192, 192, 0.2)",
+				Fill:            false,
+			},
+		}
+	}
+
+	return &ChartData{
+		Labels:   labels,
+		Datasets: datasets,
+	}
+}
+
 // convertToCSV 将统一传感器数据转换为CSV格式
 func (h *WebHandlers) convertToCSV(data []models.UnifiedSensorData) string {
 	if len(data) == 0 {
@@ -189,4 +309,12 @@ func (h *WebHandlers) convertToCSV(data []models.UnifiedSensorData) string {
 	}
 
 	return csv
+}
+
+// getFloatValueFromPointer 从指针获取float64值，处理nil指针
+func getFloatValueFromPointer(ptr *float64) float64 {
+	if ptr == nil {
+		return 0
+	}
+	return *ptr
 }
