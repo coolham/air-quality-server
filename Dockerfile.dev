@@ -10,6 +10,13 @@ RUN apk add --no-cache git ca-certificates tzdata wget
 # 设置时区
 ENV TZ=Asia/Shanghai
 
+# 设置Go代理（解决中国大陆网络访问问题）
+# 支持通过构建参数覆盖
+ARG GOPROXY=https://goproxy.cn,direct
+ARG GOSUMDB=sum.golang.google.cn
+ENV GOPROXY=${GOPROXY}
+ENV GOSUMDB=${GOSUMDB}
+
 # 复制go mod文件
 COPY go.mod go.sum ./
 

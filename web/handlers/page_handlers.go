@@ -309,6 +309,7 @@ func (h *WebHandlers) Charts(c *gin.Context) {
 	deviceIDs, err := h.services.UnifiedSensorData.GetDeviceIDs(ctx)
 	if err != nil {
 		h.logger.Error("获取设备列表失败", utils.ErrorField(err))
+		// 不直接返回错误，而是显示空列表，让用户知道没有设备数据
 		deviceIDs = []string{}
 	}
 

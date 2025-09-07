@@ -74,18 +74,38 @@ func (h *WebHandlers) API(c *gin.Context) {
 		timeRange := c.DefaultQuery("time_range", "24")
 		metric := c.DefaultQuery("metric", "all")
 
+		// 参数验证
 		if deviceID == "" {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "device_id is required"})
+			h.handleAPIError(c, "device_id is required", http.StatusBadRequest)
 			return
 		}
 
-		hours, _ := strconv.Atoi(timeRange)
+		// 验证时间范围参数
+		hours, err := strconv.Atoi(timeRange)
+		if err != nil || hours <= 0 || hours > 8760 { // 最大1年
+			h.handleAPIError(c, "invalid time_range parameter", http.StatusBadRequest)
+			return
+		}
+
+		// 验证指标参数
+		validMetrics := []string{"all", "pm25", "formaldehyde", "temperature", "humidity"}
+		if !h.isValidMetric(metric, validMetrics) {
+			h.handleAPIError(c, "invalid metric parameter", http.StatusBadRequest)
+			return
+		}
+
 		endTime := time.Now()
 		startTime := endTime.Add(-time.Duration(hours) * time.Hour)
 
 		historyData, err := h.services.UnifiedSensorData.GetDataByTimeRange(ctx, deviceID, startTime.Unix(), endTime.Unix())
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			h.logger.Error("获取图表数据失败", utils.ErrorField(err), utils.String("device_id", deviceID))
+			h.handleAPIError(c, "failed to get chart data", http.StatusInternalServerError)
+			return
+		}
+
+		if len(historyData) == 0 {
+			h.handleAPIError(c, "no data found for the specified criteria", http.StatusNotFound)
 			return
 		}
 
@@ -95,13 +115,14 @@ func (h *WebHandlers) API(c *gin.Context) {
 	case "sensors":
 		deviceID := c.Query("device_id")
 		if deviceID == "" {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "device_id is required"})
+			h.handleAPIError(c, "device_id is required", http.StatusBadRequest)
 			return
 		}
 
 		sensorIDs, err := h.services.UnifiedSensorData.GetSensorIDsByDeviceID(ctx, deviceID)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			h.logger.Error("获取传感器列表失败", utils.ErrorField(err), utils.String("device_id", deviceID))
+			h.handleAPIError(c, "failed to get sensor list", http.StatusInternalServerError)
 			return
 		}
 
@@ -118,18 +139,53 @@ func (h *WebHandlers) SensorsAPI(c *gin.Context) {
 
 	deviceID := c.Query("device_id")
 	if deviceID == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "device_id is required"})
+		h.handleAPIError(c, "device_id is required", http.StatusBadRequest)
 		return
 	}
 
 	sensorIDs, err := h.services.UnifiedSensorData.GetSensorIDsByDeviceID(ctx, deviceID)
 	if err != nil {
-		h.logger.Error("获取传感器列表失败", utils.ErrorField(err))
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		h.logger.Error("获取传感器列表失败", utils.ErrorField(err), utils.String("device_id", deviceID))
+		h.handleAPIError(c, "failed to get sensor list", http.StatusInternalServerError)
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{"sensors": sensorIDs})
+}
+
+// handleAPIError 处理API错误
+func (h *WebHandlers) handleAPIError(c *gin.Context, message string, statusCode int) {
+	requestID := h.getRequestID(c)
+
+	response := gin.H{
+		"error":      http.StatusText(statusCode),
+		"message":    message,
+		"code":       statusCode,
+		"request_id": requestID,
+		"timestamp":  time.Now().Format(time.RFC3339),
+	}
+
+	c.JSON(statusCode, response)
+}
+
+// getRequestID 获取请求ID
+func (h *WebHandlers) getRequestID(c *gin.Context) string {
+	if requestID, exists := c.Get("request_id"); exists {
+		if id, ok := requestID.(string); ok {
+			return id
+		}
+	}
+	return "unknown"
+}
+
+// isValidMetric 验证指标参数
+func (h *WebHandlers) isValidMetric(metric string, validMetrics []string) bool {
+	for _, valid := range validMetrics {
+		if metric == valid {
+			return true
+		}
+	}
+	return false
 }
 
 // DataAPI 数据查询API

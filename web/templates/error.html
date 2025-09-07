@@ -1,0 +1,57 @@
+{{define "title"}}错误页面{{end}}
+
+{{define "error_content"}}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card shadow">
+            <div class="card-body text-center">
+                <div class="mb-4">
+                    {{if eq .ErrorCode "404"}}
+                        <i class="fas fa-exclamation-triangle fa-5x text-warning"></i>
+                        <h1 class="display-1 text-warning">404</h1>
+                        <h3 class="text-muted">页面未找到</h3>
+                        <p class="text-muted">抱歉，您访问的页面不存在或已被移除。</p>
+                    {{else if eq .ErrorCode "500"}}
+                        <i class="fas fa-exclamation-circle fa-5x text-danger"></i>
+                        <h1 class="display-1 text-danger">500</h1>
+                        <h3 class="text-muted">服务器内部错误</h3>
+                        <p class="text-muted">抱歉，服务器遇到了一个错误，请稍后重试。</p>
+                    {{else if eq .ErrorCode "403"}}
+                        <i class="fas fa-ban fa-5x text-danger"></i>
+                        <h1 class="display-1 text-danger">403</h1>
+                        <h3 class="text-muted">访问被拒绝</h3>
+                        <p class="text-muted">抱歉，您没有权限访问此页面。</p>
+                    {{else}}
+                        <i class="fas fa-exclamation-triangle fa-5x text-warning"></i>
+                        <h1 class="display-1 text-warning">{{.ErrorCode}}</h1>
+                        <h3 class="text-muted">发生错误</h3>
+                        <p class="text-muted">{{.ErrorMessage}}</p>
+                    {{end}}
+                </div>
+                
+                {{if .ErrorDetails}}
+                <div class="alert alert-info text-left">
+                    <h6><i class="fas fa-info-circle"></i> 错误详情：</h6>
+                    <small class="text-muted">{{.ErrorDetails}}</small>
+                </div>
+                {{end}}
+                
+                <div class="mt-4">
+                    <a href="/dashboard" class="btn btn-primary">
+                        <i class="fas fa-home"></i> 返回首页
+                    </a>
+                    <button onclick="history.back()" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> 返回上页
+                    </button>
+                </div>
+                
+                {{if .RequestID}}
+                <div class="mt-3">
+                    <small class="text-muted">请求ID: {{.RequestID}}</small>
+                </div>
+                {{end}}
+            </div>
+        </div>
+    </div>
+</div>
+{{end}}

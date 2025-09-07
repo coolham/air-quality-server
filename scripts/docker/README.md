@@ -10,6 +10,8 @@
 - **docker-dev-start.sh** - Linux开发环境启动脚本
 - **docker-dev-full.bat** - 启动完整开发环境（包含应用服务）
 - **docker-stop.sh** - 停止所有Docker容器
+- **docker-build-china.bat** - 中国大陆网络环境Docker构建脚本（Windows）
+- **docker-build-china.sh** - 中国大陆网络环境Docker构建脚本（Linux/macOS）
 
 ## 使用流程
 
@@ -38,6 +40,29 @@ docker-dev-full.bat
 ```bash
 ./docker-stop.sh
 ```
+
+### 中国大陆网络环境构建
+如果在中国大陆遇到Go模块下载超时问题，请使用专门的构建脚本：
+
+```cmd
+# Windows环境
+REM 构建生产环境镜像
+scripts\docker\docker-build-china.bat
+
+REM 构建开发环境镜像
+scripts\docker\docker-build-china.bat dev
+```
+
+```bash
+# Linux/macOS环境
+# 构建生产环境镜像
+./scripts/docker/docker-build-china.sh
+
+# 构建开发环境镜像
+./scripts/docker/docker-build-china.sh dev
+```
+
+详细说明请参考：[Docker中国大陆网络问题解决方案](../docs/docker_china_guide.md)
 
 ## 环境说明
 

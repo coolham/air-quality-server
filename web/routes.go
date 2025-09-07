@@ -39,6 +39,14 @@ func SetupRoutes(router *gin.Engine, services *services.Services, logger utils.L
 	// 创建Web处理器
 	webHandlers := handlers.NewWebHandlers(services, logger)
 
+	// 创建错误处理器
+	errorHandler := handlers.NewErrorHandler(logger)
+
+	// 添加错误处理中间件
+	router.Use(errorHandler.RequestIDMiddleware())
+	router.Use(errorHandler.ErrorLoggerMiddleware())
+	router.Use(errorHandler.RecoveryMiddleware())
+
 	// 创建Web路由组
 	webGroup := router.Group("/")
 	{
@@ -86,4 +94,8 @@ func SetupRoutes(router *gin.Engine, services *services.Services, logger utils.L
 		webAPI.GET("/data", webHandlers.DataAPI)
 		webAPI.GET("/data/export", webHandlers.DataExportAPI)
 	}
+
+	// 设置404和405处理器
+	router.NoRoute(errorHandler.NotFoundHandler)
+	router.NoMethod(errorHandler.MethodNotAllowedHandler)
 }

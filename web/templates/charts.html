@@ -244,11 +244,12 @@ function loadChartData() {
     const metric = document.getElementById('metricSelect').value;
     
     if (!deviceId) {
-        alert('请选择设备');
+        showError('请选择设备');
         return;
     }
     
     // 显示加载状态
+    showLoading();
     if (airQualityChart) {
         airQualityChart.data.labels = [];
         airQualityChart.data.datasets = [];
@@ -263,19 +264,30 @@ function loadChartData() {
     
     // 获取数据
     fetch(url)
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(errorData => {
+                    throw new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`);
+                });
+            }
+            return response.json();
+        })
         .then(data => {
+            hideLoading();
             if (data.labels && data.datasets) {
                 updateChart(data);
                 updateStatistics(data);
                 updateStatisticsCards(metric);
+                showSuccess('图表数据加载成功');
             } else {
+                showError('无效的图表数据格式');
                 console.error('Invalid chart data:', data);
             }
         })
         .catch(error => {
+            hideLoading();
             console.error('Error loading chart data:', error);
-            alert('加载图表数据失败');
+            showError(`加载图表数据失败: ${error.message}`);
         });
 }
 
@@ -370,11 +382,24 @@ function loadSensorList(deviceId) {
         return;
     }
     
+    // 显示加载状态
+    sensorSelect.innerHTML = '<option value="">加载中...</option>';
+    sensorSelect.disabled = true;
+    
     // 获取设备的传感器列表
     fetch(`/web/api/sensors?device_id=${deviceId}`)
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(errorData => {
+                    throw new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`);
+                });
+            }
+            return response.json();
+        })
         .then(data => {
             sensorSelect.innerHTML = '<option value="">全部传感器</option>';
+            sensorSelect.disabled = false;
+            
             if (data.sensors && data.sensors.length > 0) {
                 data.sensors.forEach(sensorId => {
                     const option = document.createElement('option');
@@ -382,11 +407,16 @@ function loadSensorList(deviceId) {
                     option.textContent = sensorId;
                     sensorSelect.appendChild(option);
                 });
+                showSuccess(`加载了 ${data.sensors.length} 个传感器`);
+            } else {
+                showWarning('该设备没有找到传感器');
             }
         })
         .catch(error => {
             console.error('Error loading sensor list:', error);
-            sensorSelect.innerHTML = '<option value="">全部传感器</option>';
+            sensorSelect.innerHTML = '<option value="">加载失败</option>';
+            sensorSelect.disabled = false;
+            showError(`加载传感器列表失败: ${error.message}`);
         });
 }
 
@@ -401,6 +431,74 @@ document.getElementById('deviceSelect').addEventListener('change', function() {
     const deviceId = this.value;
     loadSensorList(deviceId);
 });
+
+// 显示错误消息
+function showError(message) {
+    showNotification(message, 'error');
+}
+
+// 显示成功消息
+function showSuccess(message) {
+    showNotification(message, 'success');
+}
+
+// 显示警告消息
+function showWarning(message) {
+    showNotification(message, 'warning');
+}
+
+// 显示通知
+function showNotification(message, type = 'info') {
+    // 创建通知元素
+    const notification = document.createElement('div');
+    notification.className = `alert alert-${type === 'error' ? 'danger' : type === 'warning' ? 'warning' : type === 'success' ? 'success' : 'info'} alert-dismissible fade show position-fixed`;
+    notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    
+    notification.innerHTML = `
+        <i class="fas fa-${type === 'error' ? 'exclamation-circle' : type === 'warning' ? 'exclamation-triangle' : type === 'success' ? 'check-circle' : 'info-circle'}"></i>
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    // 添加到页面
+    document.body.appendChild(notification);
+    
+    // 自动移除
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.remove();
+        }
+    }, 5000);
+}
+
+// 显示加载状态
+function showLoading() {
+    const chartContainer = document.querySelector('.chart-container');
+    if (chartContainer) {
+        const loadingDiv = document.createElement('div');
+        loadingDiv.id = 'loading-indicator';
+        loadingDiv.className = 'position-absolute w-100 h-100 d-flex align-items-center justify-content-center';
+        loadingDiv.style.cssText = 'background: rgba(255,255,255,0.8); z-index: 1000;';
+        loadingDiv.innerHTML = `
+            <div class="text-center">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">加载中...</span>
+                </div>
+                <div class="mt-2">正在加载数据...</div>
+            </div>
+        `;
+        chartContainer.style.position = 'relative';
+        chartContainer.appendChild(loadingDiv);
+    }
+}
+
+// 隐藏加载状态
+function hideLoading() {
+    const loadingDiv = document.getElementById('loading-indicator');
+    if (loadingDiv) {
+        loadingDiv.remove();
+    }
+}
 
 // 页面加载完成后初始化
 document.addEventListener('DOMContentLoaded', function() {
