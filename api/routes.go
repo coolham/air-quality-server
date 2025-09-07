@@ -22,6 +22,9 @@ func SetupAPIRoutes(router *gin.Engine, handlers *handlers.Handlers, services *s
 			"version":   cfg.Service.Version,
 		})
 	})
+	router.HEAD("/health", func(c *gin.Context) {
+		c.Status(http.StatusOK)
+	})
 
 	// API路由组
 	api := router.Group("/api/v1")
