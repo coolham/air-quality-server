@@ -52,14 +52,17 @@ WORKDIR /app
 # 从构建阶段复制二进制文件
 COPY --from=builder /app/air-quality-server .
 
-# 复制配置文件
+# 复制配置文件和Web模板
 COPY --from=builder /app/config ./config
+COPY --from=builder /app/web ./web
 
 # 创建日志目录并设置权限
 RUN mkdir -p /app/logs && \
     chmod 755 /app/logs && \
     chown -R root:root /app/config && \
     chmod -R 755 /app/config && \
+    chown -R root:root /app/web && \
+    chmod -R 755 /app/web && \
     chown root:root /app/air-quality-server && \
     chmod 755 /app/air-quality-server
 
