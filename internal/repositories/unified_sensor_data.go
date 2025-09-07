@@ -43,6 +43,12 @@ type UnifiedSensorDataRepository interface {
 	// 数据迁移相关方法
 	MigrateFromAirQualityData(ctx context.Context, data []models.AirQualityData) error
 	MigrateFromFormaldehydeData(ctx context.Context, data []models.FormaldehydeData) error
+
+	// 获取传感器ID列表
+	GetSensorIDs(ctx context.Context, deviceID string) ([]string, error)
+
+	// 获取所有设备数据
+	GetAllData(ctx context.Context, limit, offset int) ([]models.UnifiedSensorData, error)
 }
 
 // unifiedSensorDataRepository 统一传感器数据仓库实现
@@ -85,13 +91,16 @@ func (r *unifiedSensorDataRepository) GetHistoryByDeviceID(ctx context.Context, 
 // GetByTimeRange 获取设备指定时间范围的数据
 func (r *unifiedSensorDataRepository) GetByTimeRange(ctx context.Context, deviceID string, startTime, endTime int64) ([]models.UnifiedSensorData, error) {
 	var data []models.UnifiedSensorData
-	err := r.db.WithContext(ctx).
-		Where("device_id = ? AND timestamp BETWEEN ? AND ?",
-			deviceID,
-			time.Unix(startTime, 0),
-			time.Unix(endTime, 0)).
-		Order("timestamp ASC").
-		Find(&data).Error
+	query := r.db.WithContext(ctx).Where("timestamp BETWEEN ? AND ?",
+		time.Unix(startTime, 0),
+		time.Unix(endTime, 0))
+
+	// 如果指定了设备ID，则添加设备筛选条件
+	if deviceID != "" {
+		query = query.Where("device_id = ?", deviceID)
+	}
+
+	err := query.Order("timestamp ASC").Find(&data).Error
 	return data, err
 }
 
@@ -311,4 +320,35 @@ func (r *unifiedSensorDataRepository) MigrateFromFormaldehydeData(ctx context.Co
 	}
 
 	return r.BatchInsert(ctx, unifiedData)
+}
+
+// GetSensorIDs 获取传感器ID列表
+func (r *unifiedSensorDataRepository) GetSensorIDs(ctx context.Context, deviceID string) ([]string, error) {
+	var sensorIDs []string
+
+	query := r.db.WithContext(ctx).Model(&models.UnifiedSensorData{}).
+		Select("DISTINCT sensor_id").
+		Where("sensor_id IS NOT NULL AND sensor_id != ''")
+
+	if deviceID != "" {
+		query = query.Where("device_id = ?", deviceID)
+	}
+
+	err := query.Pluck("sensor_id", &sensorIDs).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return sensorIDs, nil
+}
+
+// GetAllData 获取所有设备数据
+func (r *unifiedSensorDataRepository) GetAllData(ctx context.Context, limit, offset int) ([]models.UnifiedSensorData, error) {
+	var data []models.UnifiedSensorData
+	err := r.db.WithContext(ctx).
+		Order("timestamp DESC").
+		Limit(limit).
+		Offset(offset).
+		Find(&data).Error
+	return data, err
 }

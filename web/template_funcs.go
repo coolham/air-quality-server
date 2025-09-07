@@ -14,6 +14,7 @@ var TemplateFuncs = map[string]interface{}{
 	"seq":        seq,
 	"contains":   contains,
 	"join":       join,
+	"deref":      deref,
 }
 
 // buildQuery 构建查询参数
@@ -57,6 +58,24 @@ func contains(s, substr string) bool {
 // join 连接字符串
 func join(elems []string, sep string) string {
 	return strings.Join(elems, sep)
+}
+
+// deref 解引用指针
+func deref(ptr interface{}) interface{} {
+	if ptr == nil {
+		return nil
+	}
+
+	// 这里简化处理，实际应该根据类型进行解引用
+	// 对于 *float64 类型，我们直接返回指针的值
+	if f, ok := ptr.(*float64); ok {
+		if f == nil {
+			return nil
+		}
+		return *f
+	}
+
+	return ptr
 }
 
 // toString 转换为字符串

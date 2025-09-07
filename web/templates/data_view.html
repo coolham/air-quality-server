@@ -53,8 +53,12 @@
                             </div>
                             <div class="col-md-2">
                                 <label for="sensor_id" class="form-label">传感器ID</label>
-                                <input type="text" class="form-control" id="sensor_id" name="sensor_id" 
-                                       value="{{.SensorID}}" placeholder="传感器ID">
+                                <select class="form-select" id="sensor_id" name="sensor_id">
+                                    <option value="">全部传感器</option>
+                                    {{range .SensorIDs}}
+                                    <option value="{{.}}" {{if eq . $.SensorID}}selected{{end}}>{{.}}</option>
+                                    {{end}}
+                                </select>
                             </div>
                             <div class="col-md-2">
                                 <label for="start_time" class="form-label">开始时间</label>
@@ -96,7 +100,8 @@
                     <div class="alert alert-danger" role="alert">
                         <i class="fas fa-exclamation-triangle"></i> {{.Error}}
                     </div>
-                    {{else if .HistoryData}}
+                    {{else}}
+                    {{if .HistoryData}}
                     <div class="table-responsive">
                         <table class="table table-striped table-hover">
                             <thead class="table-dark">
@@ -107,17 +112,9 @@
                                     <th>传感器ID</th>
                                     <th>时间戳</th>
                                     <th>PM2.5</th>
-                                    <th>PM10</th>
-                                    <th>CO2</th>
                                     <th>甲醛</th>
                                     <th>温度</th>
-                                    <th>湿度</th>
-                                    <th>气压</th>
-                                    <th>电池</th>
                                     <th>数据质量</th>
-                                    <th>位置</th>
-                                    <th>质量评分</th>
-                                    <th>信号强度</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -138,29 +135,15 @@
                                     </td>
                                     <td>
                                         {{if .PM25}}
-                                        <span class="badge bg-warning">{{printf "%.1f" .PM25}}</span>
-                                        {{else}}
-                                        <span class="text-muted">-</span>
-                                        {{end}}
-                                    </td>
-                                    <td>
-                                        {{if .PM10}}
-                                        <span class="badge bg-warning">{{printf "%.1f" .PM10}}</span>
-                                        {{else}}
-                                        <span class="text-muted">-</span>
-                                        {{end}}
-                                    </td>
-                                    <td>
-                                        {{if .CO2}}
-                                        <span class="badge bg-info">{{printf "%.0f" .CO2}}</span>
+                                        <span class="badge bg-warning">{{printf "%.1f" (deref .PM25)}}</span>
                                         {{else}}
                                         <span class="text-muted">-</span>
                                         {{end}}
                                     </td>
                                     <td>
                                         {{if .Formaldehyde}}
-                                        <span class="badge {{if gt .Formaldehyde 0.08}}bg-danger{{else}}bg-success{{end}}">
-                                            {{printf "%.3f" .Formaldehyde}}
+                                        <span class="badge {{if gt (deref .Formaldehyde) 0.08}}bg-danger{{else}}bg-success{{end}}">
+                                            {{printf "%.3f" (deref .Formaldehyde)}}
                                         </span>
                                         {{else}}
                                         <span class="text-muted">-</span>
@@ -168,30 +151,7 @@
                                     </td>
                                     <td>
                                         {{if .Temperature}}
-                                        <span class="badge bg-primary">{{printf "%.1f" .Temperature}}°C</span>
-                                        {{else}}
-                                        <span class="text-muted">-</span>
-                                        {{end}}
-                                    </td>
-                                    <td>
-                                        {{if .Humidity}}
-                                        <span class="badge bg-info">{{printf "%.1f" .Humidity}}%</span>
-                                        {{else}}
-                                        <span class="text-muted">-</span>
-                                        {{end}}
-                                    </td>
-                                    <td>
-                                        {{if .Pressure}}
-                                        <span class="badge bg-secondary">{{printf "%.1f" .Pressure}}</span>
-                                        {{else}}
-                                        <span class="text-muted">-</span>
-                                        {{end}}
-                                    </td>
-                                    <td>
-                                        {{if .Battery}}
-                                        <span class="badge {{if lt .Battery 20}}bg-danger{{else if lt .Battery 50}}bg-warning{{else}}bg-success{{end}}">
-                                            {{printf "%.0f" .Battery}}%
-                                        </span>
+                                        <span class="badge bg-primary">{{printf "%.1f" (deref .Temperature)}}°C</span>
                                         {{else}}
                                         <span class="text-muted">-</span>
                                         {{end}}
@@ -200,33 +160,6 @@
                                         <span class="badge {{if eq .DataQuality "good"}}bg-success{{else if eq .DataQuality "warning"}}bg-warning{{else}}bg-danger{{end}}">
                                             {{.DataQuality}}
                                         </span>
-                                    </td>
-                                    <td>
-                                        {{if and .Latitude .Longitude}}
-                                        <small class="text-muted">
-                                            {{printf "%.4f, %.4f" .Latitude .Longitude}}
-                                        </small>
-                                        {{else}}
-                                        <span class="text-muted">-</span>
-                                        {{end}}
-                                    </td>
-                                    <td>
-                                        {{if .QualityScore}}
-                                        <span class="badge {{if ge .QualityScore 80}}bg-success{{else if ge .QualityScore 60}}bg-warning{{else}}bg-danger{{end}}">
-                                            {{printf "%.0f" .QualityScore}}
-                                        </span>
-                                        {{else}}
-                                        <span class="text-muted">-</span>
-                                        {{end}}
-                                    </td>
-                                    <td>
-                                        {{if .SignalStrength}}
-                                        <span class="badge {{if gt .SignalStrength -70}}bg-success{{else if gt .SignalStrength -80}}bg-warning{{else}}bg-danger{{end}}">
-                                            {{.SignalStrength}}dBm
-                                        </span>
-                                        {{else}}
-                                        <span class="text-muted">-</span>
-                                        {{end}}
                                     </td>
                                 </tr>
                                 {{end}}
@@ -240,19 +173,19 @@
                         <ul class="pagination justify-content-center">
                             {{if gt .Pagination.CurrentPage 1}}
                             <li class="page-item">
-                                <a class="page-link" href="?page={{sub .Pagination.CurrentPage 1}}">上一页</a>
+                                <a class="page-link" href="?page={{sub .Pagination.CurrentPage 1}}&device_id={{.SelectedDevice}}&device_type={{.DeviceType}}&sensor_id={{.SensorID}}&start_time={{.StartTime}}&end_time={{.EndTime}}">上一页</a>
                             </li>
                             {{end}}
 
                             {{range $i := (seq 1 .Pagination.TotalPages)}}
                             <li class="page-item {{if eq $i $.Pagination.CurrentPage}}active{{end}}">
-                                <a class="page-link" href="?page={{$i}}">{{$i}}</a>
+                                <a class="page-link" href="?page={{$i}}&device_id={{$.SelectedDevice}}&device_type={{$.DeviceType}}&sensor_id={{$.SensorID}}&start_time={{$.StartTime}}&end_time={{$.EndTime}}">{{$i}}</a>
                             </li>
                             {{end}}
 
                             {{if lt .Pagination.CurrentPage .Pagination.TotalPages}}
                             <li class="page-item">
-                                <a class="page-link" href="?page={{add .Pagination.CurrentPage 1}}">下一页</a>
+                                <a class="page-link" href="?page={{add .Pagination.CurrentPage 1}}&device_id={{.SelectedDevice}}&device_type={{.DeviceType}}&sensor_id={{.SensorID}}&start_time={{.StartTime}}&end_time={{.EndTime}}">下一页</a>
                             </li>
                             {{end}}
                         </ul>
@@ -264,6 +197,7 @@
                         <h5 class="text-muted">暂无数据</h5>
                         <p class="text-muted">请选择筛选条件查询数据</p>
                     </div>
+                    {{end}}
                     {{end}}
                 </div>
             </div>
