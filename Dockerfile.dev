@@ -29,6 +29,12 @@ RUN go install github.com/cosmtrek/air@latest
 # 复制源代码
 COPY . .
 
+# 创建日志目录并设置权限
+RUN mkdir -p /app/logs && \
+    chmod 755 /app/logs && \
+    chown -R root:root /app/config && \
+    chmod -R 755 /app/config
+
 # 暴露端口
 EXPOSE 8080 1883
 

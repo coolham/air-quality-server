@@ -58,9 +58,9 @@ services:
     depends_on:
       - mysql
       - redis
-    volumes:
-      - ./config:/app/config
-      - ./logs:/app/logs
+    # volumes:
+      # - ./config:/app/config  # 移除卷映射，使用容器内配置文件
+      # - ./logs:/app/logs      # 移除卷映射，日志输出到容器内
     networks:
       - air-quality-network
     restart: unless-stopped
