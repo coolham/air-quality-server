@@ -1,0 +1,152 @@
+version: '3.8'
+
+services:
+  # MySQL 数据库
+  mysql:
+    image: mysql:8.0
+    container_name: air-quality-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root123
+      MYSQL_DATABASE: air_quality
+      MYSQL_USER: air_quality
+      MYSQL_PASSWORD: air_quality123
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./scripts/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - air-quality-network
+
+  # Redis 缓存和消息队列
+  redis:
+    image: redis:7.0-alpine
+    container_name: air-quality-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - air-quality-network
+
+
+  # Consul 服务发现
+  consul:
+    image: consul:1.16
+    container_name: air-quality-consul
+    ports:
+      - "8500:8500"
+    command: agent -server -bootstrap-expect=1 -client=0.0.0.0 -ui
+    volumes:
+      - consul_data:/consul/data
+    networks:
+      - air-quality-network
+
+  # Prometheus 监控
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: air-quality-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./config/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=200h'
+      - '--web.enable-lifecycle'
+    networks:
+      - air-quality-network
+
+  # Grafana 可视化
+  grafana:
+    image: grafana/grafana:latest
+    container_name: air-quality-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: admin123
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./config/grafana/dashboards:/etc/grafana/provisioning/dashboards
+      - ./config/grafana/datasources:/etc/grafana/provisioning/datasources
+    networks:
+      - air-quality-network
+
+  # Elasticsearch 日志存储
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.8.0
+    container_name: air-quality-elasticsearch
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ports:
+      - "9200:9200"
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+    networks:
+      - air-quality-network
+
+  # Kibana 日志可视化
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.8.0
+    container_name: air-quality-kibana
+    depends_on:
+      - elasticsearch
+    ports:
+      - "5601:5601"
+    environment:
+      ELASTICSEARCH_HOSTS: http://elasticsearch:9200
+    networks:
+      - air-quality-network
+
+  # Logstash 日志处理
+  logstash:
+    image: docker.elastic.co/logstash/logstash:8.8.0
+    container_name: air-quality-logstash
+    depends_on:
+      - elasticsearch
+    volumes:
+      - ./config/logstash/pipeline:/usr/share/logstash/pipeline
+      - ./config/logstash/config:/usr/share/logstash/config
+    networks:
+      - air-quality-network
+
+  # 空气质量监测应用
+  air-quality-server:
+    build: .
+    container_name: air-quality-server
+    ports:
+      - "8080:8080"
+    environment:
+      - CONFIG_FILE=config/config.yaml
+      - DB_HOST=mysql
+      - DB_PORT=3306
+      - DB_USERNAME=air_quality
+      - DB_PASSWORD=air_quality123
+      - DB_NAME=air_quality
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    depends_on:
+      - mysql
+      - redis
+    volumes:
+      - ./config:/app/config
+    networks:
+      - air-quality-network
+
+volumes:
+  mysql_data:
+  redis_data:
+  consul_data:
+  prometheus_data:
+  grafana_data:
+  elasticsearch_data:
+
+networks:
+  air-quality-network:
+    driver: bridge

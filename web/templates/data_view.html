@@ -1,0 +1,367 @@
+
+
+{{define "title"}}数据查看{{end}}
+
+{{define "data_view_content"}}
+<div class="container-fluid">
+    <!-- 页面标题 -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <h1 class="h3 mb-0">数据查看</h1>
+                <div class="btn-group" role="group">
+                    <button type="button" class="btn btn-outline-primary" onclick="exportData('csv')">
+                        <i class="fas fa-download"></i> 导出CSV
+                    </button>
+                    <button type="button" class="btn btn-outline-success" onclick="exportData('json')">
+                        <i class="fas fa-download"></i> 导出JSON
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 筛选条件 -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-filter"></i> 筛选条件
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form id="filterForm" method="GET" action="/sensor-data">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <label for="device_id" class="form-label">设备ID</label>
+                                <select class="form-select" id="device_id" name="device_id">
+                                    <option value="">全部设备</option>
+                                    {{range .Devices}}
+                                    <option value="{{.ID}}" {{if eq .ID $.SelectedDevice}}selected{{end}}>{{.Name}} ({{.ID}})</option>
+                                    {{end}}
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <label for="device_type" class="form-label">设备类型</label>
+                                <select class="form-select" id="device_type" name="device_type">
+                                    <option value="">全部类型</option>
+                                    <option value="hcho" {{if eq .DeviceType "hcho"}}selected{{end}}>甲醛传感器</option>
+                                    <option value="esp32" {{if eq .DeviceType "esp32"}}selected{{end}}>ESP32</option>
+                                    <option value="sensor" {{if eq .DeviceType "sensor"}}selected{{end}}>通用传感器</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <label for="sensor_id" class="form-label">传感器ID</label>
+                                <input type="text" class="form-control" id="sensor_id" name="sensor_id" 
+                                       value="{{.SensorID}}" placeholder="传感器ID">
+                            </div>
+                            <div class="col-md-2">
+                                <label for="start_time" class="form-label">开始时间</label>
+                                <input type="datetime-local" class="form-control" id="start_time" name="start_time" 
+                                       value="{{.StartTime}}">
+                            </div>
+                            <div class="col-md-2">
+                                <label for="end_time" class="form-label">结束时间</label>
+                                <input type="datetime-local" class="form-control" id="end_time" name="end_time" 
+                                       value="{{.EndTime}}">
+                            </div>
+                            <div class="col-md-1">
+                                <label class="form-label">&nbsp;</label>
+                                <div class="d-grid">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-search"></i> 查询
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 数据表格 -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-table"></i> 传感器数据
+                        <span class="badge bg-primary ms-2">{{.Pagination.TotalItems}} 条记录</span>
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {{if .Error}}
+                    <div class="alert alert-danger" role="alert">
+                        <i class="fas fa-exclamation-triangle"></i> {{.Error}}
+                    </div>
+                    {{else if .HistoryData}}
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>ID</th>
+                                    <th>设备ID</th>
+                                    <th>设备类型</th>
+                                    <th>传感器ID</th>
+                                    <th>时间戳</th>
+                                    <th>PM2.5</th>
+                                    <th>PM10</th>
+                                    <th>CO2</th>
+                                    <th>甲醛</th>
+                                    <th>温度</th>
+                                    <th>湿度</th>
+                                    <th>气压</th>
+                                    <th>电池</th>
+                                    <th>数据质量</th>
+                                    <th>位置</th>
+                                    <th>质量评分</th>
+                                    <th>信号强度</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {{range .HistoryData}}
+                                <tr>
+                                    <td>{{.ID}}</td>
+                                    <td>
+                                        <span class="badge bg-secondary">{{.DeviceID}}</span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-info">{{.DeviceType}}</span>
+                                    </td>
+                                    <td>
+                                        <small class="text-muted">{{.SensorID}}</small>
+                                    </td>
+                                    <td>
+                                        <small>{{.Timestamp.Format "01-02 15:04:05"}}</small>
+                                    </td>
+                                    <td>
+                                        {{if .PM25}}
+                                        <span class="badge bg-warning">{{printf "%.1f" .PM25}}</span>
+                                        {{else}}
+                                        <span class="text-muted">-</span>
+                                        {{end}}
+                                    </td>
+                                    <td>
+                                        {{if .PM10}}
+                                        <span class="badge bg-warning">{{printf "%.1f" .PM10}}</span>
+                                        {{else}}
+                                        <span class="text-muted">-</span>
+                                        {{end}}
+                                    </td>
+                                    <td>
+                                        {{if .CO2}}
+                                        <span class="badge bg-info">{{printf "%.0f" .CO2}}</span>
+                                        {{else}}
+                                        <span class="text-muted">-</span>
+                                        {{end}}
+                                    </td>
+                                    <td>
+                                        {{if .Formaldehyde}}
+                                        <span class="badge {{if gt .Formaldehyde 0.08}}bg-danger{{else}}bg-success{{end}}">
+                                            {{printf "%.3f" .Formaldehyde}}
+                                        </span>
+                                        {{else}}
+                                        <span class="text-muted">-</span>
+                                        {{end}}
+                                    </td>
+                                    <td>
+                                        {{if .Temperature}}
+                                        <span class="badge bg-primary">{{printf "%.1f" .Temperature}}°C</span>
+                                        {{else}}
+                                        <span class="text-muted">-</span>
+                                        {{end}}
+                                    </td>
+                                    <td>
+                                        {{if .Humidity}}
+                                        <span class="badge bg-info">{{printf "%.1f" .Humidity}}%</span>
+                                        {{else}}
+                                        <span class="text-muted">-</span>
+                                        {{end}}
+                                    </td>
+                                    <td>
+                                        {{if .Pressure}}
+                                        <span class="badge bg-secondary">{{printf "%.1f" .Pressure}}</span>
+                                        {{else}}
+                                        <span class="text-muted">-</span>
+                                        {{end}}
+                                    </td>
+                                    <td>
+                                        {{if .Battery}}
+                                        <span class="badge {{if lt .Battery 20}}bg-danger{{else if lt .Battery 50}}bg-warning{{else}}bg-success{{end}}">
+                                            {{printf "%.0f" .Battery}}%
+                                        </span>
+                                        {{else}}
+                                        <span class="text-muted">-</span>
+                                        {{end}}
+                                    </td>
+                                    <td>
+                                        <span class="badge {{if eq .DataQuality "good"}}bg-success{{else if eq .DataQuality "warning"}}bg-warning{{else}}bg-danger{{end}}">
+                                            {{.DataQuality}}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        {{if and .Latitude .Longitude}}
+                                        <small class="text-muted">
+                                            {{printf "%.4f, %.4f" .Latitude .Longitude}}
+                                        </small>
+                                        {{else}}
+                                        <span class="text-muted">-</span>
+                                        {{end}}
+                                    </td>
+                                    <td>
+                                        {{if .QualityScore}}
+                                        <span class="badge {{if ge .QualityScore 80}}bg-success{{else if ge .QualityScore 60}}bg-warning{{else}}bg-danger{{end}}">
+                                            {{printf "%.0f" .QualityScore}}
+                                        </span>
+                                        {{else}}
+                                        <span class="text-muted">-</span>
+                                        {{end}}
+                                    </td>
+                                    <td>
+                                        {{if .SignalStrength}}
+                                        <span class="badge {{if gt .SignalStrength -70}}bg-success{{else if gt .SignalStrength -80}}bg-warning{{else}}bg-danger{{end}}">
+                                            {{.SignalStrength}}dBm
+                                        </span>
+                                        {{else}}
+                                        <span class="text-muted">-</span>
+                                        {{end}}
+                                    </td>
+                                </tr>
+                                {{end}}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- 分页 -->
+                    {{if gt .Pagination.TotalPages 1}}
+                    <nav aria-label="数据分页">
+                        <ul class="pagination justify-content-center">
+                            {{if gt .Pagination.CurrentPage 1}}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{sub .Pagination.CurrentPage 1}}">上一页</a>
+                            </li>
+                            {{end}}
+
+                            {{range $i := (seq 1 .Pagination.TotalPages)}}
+                            <li class="page-item {{if eq $i $.Pagination.CurrentPage}}active{{end}}">
+                                <a class="page-link" href="?page={{$i}}">{{$i}}</a>
+                            </li>
+                            {{end}}
+
+                            {{if lt .Pagination.CurrentPage .Pagination.TotalPages}}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{add .Pagination.CurrentPage 1}}">下一页</a>
+                            </li>
+                            {{end}}
+                        </ul>
+                    </nav>
+                    {{end}}
+                    {{else}}
+                    <div class="text-center py-5">
+                        <i class="fas fa-database fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">暂无数据</h5>
+                        <p class="text-muted">请选择筛选条件查询数据</p>
+                    </div>
+                    {{end}}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 统计信息 -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-chart-bar"></i> 数据统计
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <h4 class="text-primary">{{.Pagination.TotalItems}}</h4>
+                                <p class="text-muted mb-0">总记录数</p>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <h4 class="text-success">{{.Pagination.PageSize}}</h4>
+                                <p class="text-muted mb-0">每页显示</p>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <h4 class="text-info">{{.Pagination.TotalPages}}</h4>
+                                <p class="text-muted mb-0">总页数</p>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <h4 class="text-warning">{{.Pagination.CurrentPage}}</h4>
+                                <p class="text-muted mb-0">当前页</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// 导出数据功能
+function exportData(format) {
+    const form = document.getElementById('filterForm');
+    const formData = new FormData(form);
+    formData.append('format', format);
+    
+    // 构建查询参数
+    const params = new URLSearchParams();
+    for (let [key, value] of formData.entries()) {
+        if (value) {
+            params.append(key, value);
+        }
+    }
+    
+    // 打开下载链接
+    const url = `/web/api/data/export?${params.toString()}`;
+    window.open(url, '_blank');
+}
+
+// 自动刷新功能（可选）
+let autoRefreshInterval;
+function toggleAutoRefresh() {
+    if (autoRefreshInterval) {
+        clearInterval(autoRefreshInterval);
+        autoRefreshInterval = null;
+        document.getElementById('autoRefreshBtn').innerHTML = '<i class="fas fa-play"></i> 自动刷新';
+    } else {
+        autoRefreshInterval = setInterval(() => {
+            location.reload();
+        }, 30000); // 30秒刷新一次
+        document.getElementById('autoRefreshBtn').innerHTML = '<i class="fas fa-pause"></i> 停止刷新';
+    }
+}
+
+// 页面加载完成后设置默认时间
+document.addEventListener('DOMContentLoaded', function() {
+    const now = new Date();
+    const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
+    
+    // 设置默认时间范围（最近1小时）
+    if (!document.getElementById('start_time').value) {
+        document.getElementById('start_time').value = oneHourAgo.toISOString().slice(0, 16);
+    }
+    if (!document.getElementById('end_time').value) {
+        document.getElementById('end_time').value = now.toISOString().slice(0, 16);
+    }
+});
+</script>
+{{end}}
+
+{{define "data_view_scripts"}}
+{{end}}

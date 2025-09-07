@@ -1,0 +1,54 @@
+
+
+{{define "title"}}告警管理{{end}}
+
+{{define "alerts_content"}}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="h3 mb-0">
+                <i class="fas fa-exclamation-triangle"></i> 告警管理
+            </h1>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-danger">告警列表</h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered" width="100%" cellspacing="0">
+                            <thead>
+                                <tr>
+                                    <th>告警ID</th>
+                                    <th>设备ID</th>
+                                    <th>类型</th>
+                                    <th>级别</th>
+                                    <th>内容</th>
+                                    <th>时间</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {{range .Alerts}}
+                                <tr>
+                                    <td>{{.ID}}</td>
+                                    <td>{{.DeviceID}}</td>
+                                    <td>{{.Type}}</td>
+                                    <td>{{.Level}}</td>
+                                    <td>{{.Content}}</td>
+                                    <td>{{.CreatedAt}}</td>
+                                </tr>
+                                {{else}}
+                                <tr><td colspan="6" class="text-center">暂无告警数据</td></tr>
+                                {{end}}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{{end}}

@@ -1,0 +1,52 @@
+# 空气质量监测系统配置文件
+
+# 服务器配置
+server:
+  port: 8080
+  host: "0.0.0.0"
+  read_timeout: 30
+  write_timeout: 30
+  idle_timeout: 120
+
+# 数据库配置
+database:
+  host: "localhost"
+  port: 3306
+  username: "root"
+  password: "admin"
+  database: "air_quality"
+  charset: "utf8mb4"
+  max_idle: 10
+  max_open: 100
+  max_life: 3600
+
+# Redis配置
+redis:
+  host: "localhost"
+  port: 6379
+  password: ""
+  db: 0
+  pool_size: 10
+
+# JWT配置
+jwt:
+  secret: "air-quality-secret-key-change-in-production"
+  expire_hours: 24
+  issuer: "air-quality-server"
+
+# 日志配置
+log:
+  level: "info"
+  format: "json"
+  output: "stdout"
+  max_size: 100
+  max_backups: 3
+  max_age: 28
+  compress: true
+
+# 服务配置
+service:
+  name: "air-quality-server"
+  version: "1.0.0"
+  environment: "development"
+  debug: false

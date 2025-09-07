@@ -1,0 +1,93 @@
+{
+  "mqtt_brokers": [
+    {
+      "name": "本地开发环境",
+      "host": "localhost",
+      "port": 1883,
+      "username": "admin",
+      "password": "password",
+      "description": "本地Mosquitto Broker"
+    },
+    {
+      "name": "Docker环境",
+      "host": "localhost",
+      "port": 1883,
+      "username": "admin",
+      "password": "password",
+      "description": "Docker Compose启动的MQTT Broker"
+    },
+    {
+      "name": "测试环境",
+      "host": "192.168.1.100",
+      "port": 1883,
+      "username": "test_user",
+      "password": "test_password",
+      "description": "测试服务器MQTT Broker"
+    }
+  ],
+  "test_scenarios": [
+    {
+      "name": "基础数据上报测试",
+      "description": "测试设备数据上报功能",
+      "device_count": 3,
+      "message_interval": 30,
+      "test_duration": 300
+    },
+    {
+      "name": "配置下发测试",
+      "description": "测试配置下发功能",
+      "device_count": 1,
+      "message_interval": 0,
+      "test_duration": 60
+    },
+    {
+      "name": "命令控制测试",
+      "description": "测试命令控制功能",
+      "device_count": 1,
+      "message_interval": 0,
+      "test_duration": 60
+    },
+    {
+      "name": "压力测试",
+      "description": "测试大量设备并发上报",
+      "device_count": 10,
+      "message_interval": 5,
+      "test_duration": 600
+    }
+  ],
+  "device_templates": [
+    {
+      "device_id": "hcho_001",
+      "device_type": "hcho",
+      "sensor_id": "sensor_hcho_001_01",
+      "sensor_type": "hcho",
+      "location": {
+        "latitude": 39.9042,
+        "longitude": 116.4074,
+        "address": "北京市朝阳区"
+      }
+    },
+    {
+      "device_id": "hcho_002",
+      "device_type": "hcho",
+      "sensor_id": "sensor_hcho_002_01",
+      "sensor_type": "hcho",
+      "location": {
+        "latitude": 39.9142,
+        "longitude": 116.4174,
+        "address": "北京市海淀区"
+      }
+    },
+    {
+      "device_id": "hcho_003",
+      "device_type": "hcho",
+      "sensor_id": "sensor_hcho_003_01",
+      "sensor_type": "hcho",
+      "location": {
+        "latitude": 39.8942,
+        "longitude": 116.3974,
+        "address": "北京市西城区"
+      }
+    }
+  ]
+}

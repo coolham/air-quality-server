@@ -1,0 +1,98 @@
+version: '3.8'
+
+services:
+  # 开发环境数据库
+  mysql-dev:
+    image: mysql:8.0
+    container_name: air-quality-mysql-dev
+    environment:
+      MYSQL_ROOT_PASSWORD: root123
+      MYSQL_DATABASE: air_quality_dev
+      MYSQL_USER: air_quality
+      MYSQL_PASSWORD: air_quality123
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_dev_data:/var/lib/mysql
+      - ./scripts/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - air-quality-dev-network
+
+  # 开发环境 InfluxDB
+  influxdb-dev:
+    image: influxdb:2.7
+    container_name: air-quality-influxdb-dev
+    environment:
+      DOCKER_INFLUXDB_INIT_MODE: setup
+      DOCKER_INFLUXDB_INIT_USERNAME: admin
+      DOCKER_INFLUXDB_INIT_PASSWORD: admin123
+      DOCKER_INFLUXDB_INIT_ORG: air-quality-dev
+      DOCKER_INFLUXDB_INIT_BUCKET: air-quality-data-dev
+    ports:
+      - "8087:8086"
+    volumes:
+      - influxdb_dev_data:/var/lib/influxdb2
+    networks:
+      - air-quality-dev-network
+
+  # 开发环境 Redis
+  redis-dev:
+    image: redis:7.0-alpine
+    container_name: air-quality-redis-dev
+    ports:
+      - "6380:6379"
+    volumes:
+      - redis_dev_data:/data
+    networks:
+      - air-quality-dev-network
+
+  # 开发环境 Kafka
+  zookeeper-dev:
+    image: confluentinc/cp-zookeeper:7.4.0
+    container_name: air-quality-zookeeper-dev
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    networks:
+      - air-quality-dev-network
+
+  kafka-dev:
+    image: confluentinc/cp-kafka:7.4.0
+    container_name: air-quality-kafka-dev
+    depends_on:
+      - zookeeper-dev
+    ports:
+      - "9093:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper-dev:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9093
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: true
+    volumes:
+      - kafka_dev_data:/var/lib/kafka/data
+    networks:
+      - air-quality-dev-network
+
+  # 开发环境 Consul
+  consul-dev:
+    image: consul:1.16
+    container_name: air-quality-consul-dev
+    ports:
+      - "8501:8500"
+    command: agent -server -bootstrap-expect=1 -client=0.0.0.0 -ui
+    volumes:
+      - consul_dev_data:/consul/data
+    networks:
+      - air-quality-dev-network
+
+volumes:
+  mysql_dev_data:
+  influxdb_dev_data:
+  redis_dev_data:
+  kafka_dev_data:
+  consul_dev_data:
+
+networks:
+  air-quality-dev-network:
+    driver: bridge

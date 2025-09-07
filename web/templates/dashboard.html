@@ -1,0 +1,188 @@
+{{define "dashboard_content"}}
+<div class="row">
+    <div class="col-12">
+        <h1 class="h3 mb-4">
+            <i class="fas fa-tachometer-alt"></i> 系统仪表板
+            <small class="text-muted">{{.CurrentTime}}</small>
+        </h1>
+    </div>
+</div>
+<!-- 统计卡片 -->
+<div class="row mb-4">
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-primary shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                            总设备数
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">
+                            {{.DeviceStats.TotalDevices}}
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-microchip fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-success shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                            在线设备
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">
+                            {{.DeviceStats.OnlineDevices}}
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-wifi fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-warning shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                            活跃告警
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">
+                            {{.AlertStats.UnresolvedAlerts}}
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-exclamation-triangle fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-info shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                            数据点总数
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">
+                            {{len .LatestData}}
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-database fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- 最新数据表格 -->
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">最新数据</h6>
+                <a href="/sensor-data" class="btn btn-sm btn-primary">
+                    <i class="fas fa-eye"></i> 查看全部
+                </a>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+                        <thead>
+                            <tr>
+                                <th>设备名称</th>
+                                <th>PM2.5</th>
+                                <th>PM10</th>
+                                <th>温度</th>
+                                <th>湿度</th>
+                                <th>状态</th>
+                                <th>更新时间</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {{range .LatestData}}
+                            <tr>
+                                <td>{{.DeviceName}}</td>
+                                <td>
+                                    <span class="badge {{if gt .PM25 75}}bg-danger{{else if gt .PM25 35}}bg-warning{{else}}bg-success{{end}}">
+                                        {{.PM25}} μg/m³
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="badge {{if gt .PM10 150}}bg-danger{{else if gt .PM10 50}}bg-warning{{else}}bg-success{{end}}">
+                                        {{.PM10}} μg/m³
+                                    </span>
+                                </td>
+                                <td>{{.Temp}}°C</td>
+                                <td>{{.Humidity}}%</td>
+                                <td>
+                                    <span class="badge {{if eq .Status "online"}}bg-success{{else}}bg-secondary{{end}}">
+                                        {{.Status}}
+                                    </span>
+                                </td>
+                                <td>{{.CreatedAt.Format "15:04:05"}}</td>
+                                <td>
+                                    <a href="/devices/{{.DeviceID}}" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {{end}}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- 快速操作 -->
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">快速操作</h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3 mb-3">
+                        <a href="/devices" class="btn btn-outline-primary btn-lg w-100">
+                            <i class="fas fa-microchip fa-2x mb-2"></i><br>
+                            设备管理
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <a href="/sensor-data" class="btn btn-outline-success btn-lg w-100">
+                            <i class="fas fa-database fa-2x mb-2"></i><br>
+                            数据查看
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <a href="/charts" class="btn btn-outline-info btn-lg w-100">
+                            <i class="fas fa-chart-line fa-2x mb-2"></i><br>
+                            图表分析
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <a href="/alerts" class="btn btn-outline-warning btn-lg w-100">
+                            <i class="fas fa-exclamation-triangle fa-2x mb-2"></i><br>
+                            告警管理
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{{end}}

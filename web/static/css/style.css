@@ -1,0 +1,301 @@
+/* 自定义样式 */
+
+/* 全局样式 */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f8f9fc;
+}
+
+/* 导航栏样式 */
+.navbar-brand {
+    font-weight: bold;
+    font-size: 1.5rem;
+}
+
+.navbar-nav .nav-link {
+    font-weight: 500;
+    margin: 0 0.5rem;
+}
+
+.navbar-nav .nav-link:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 0.375rem;
+}
+
+/* 卡片样式 */
+.card {
+    border: none;
+    border-radius: 0.35rem;
+    box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+}
+
+.card-header {
+    background-color: #f8f9fc;
+    border-bottom: 1px solid #e3e6f0;
+}
+
+/* 统计卡片样式 */
+.border-left-primary {
+    border-left: 0.25rem solid #4e73df !important;
+}
+
+.border-left-success {
+    border-left: 0.25rem solid #1cc88a !important;
+}
+
+.border-left-info {
+    border-left: 0.25rem solid #36b9cc !important;
+}
+
+.border-left-warning {
+    border-left: 0.25rem solid #f6c23e !important;
+}
+
+.border-left-danger {
+    border-left: 0.25rem solid #e74a3b !important;
+}
+
+/* 表格样式 */
+.table {
+    font-size: 0.875rem;
+}
+
+.table th {
+    border-top: none;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    color: #5a5c69;
+}
+
+/* 徽章样式 */
+.badge {
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+/* 按钮样式 */
+.btn {
+    font-weight: 500;
+    border-radius: 0.35rem;
+}
+
+.btn-sm {
+    font-size: 0.75rem;
+}
+
+/* 图表容器样式 */
+.chart-container {
+    position: relative;
+    height: 400px;
+    width: 100%;
+}
+
+/* 加载动画 */
+.loading {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 3px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    border-top-color: #fff;
+    animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+    .container-fluid {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+    
+    .card-body {
+        padding: 1rem;
+    }
+    
+    .table-responsive {
+        font-size: 0.8rem;
+    }
+    
+    .btn-group-vertical .btn {
+        margin-bottom: 0.25rem;
+    }
+}
+
+/* 数据表格样式 */
+.dataTables_wrapper {
+    padding-top: 1rem;
+}
+
+.dataTables_filter {
+    text-align: right;
+    margin-bottom: 1rem;
+}
+
+.dataTables_length {
+    margin-bottom: 1rem;
+}
+
+.dataTables_info {
+    margin-top: 1rem;
+    font-size: 0.875rem;
+    color: #6c757d;
+}
+
+.dataTables_paginate {
+    margin-top: 1rem;
+}
+
+/* 状态指示器 */
+.status-indicator {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 0.5rem;
+}
+
+.status-online {
+    background-color: #1cc88a;
+}
+
+.status-offline {
+    background-color: #e74a3b;
+}
+
+.status-warning {
+    background-color: #f6c23e;
+}
+
+/* 空气质量等级颜色 */
+.air-quality-excellent {
+    color: #1cc88a;
+}
+
+.air-quality-good {
+    color: #36b9cc;
+}
+
+.air-quality-moderate {
+    color: #f6c23e;
+}
+
+.air-quality-unhealthy {
+    color: #e74a3b;
+}
+
+.air-quality-hazardous {
+    color: #5a5c69;
+}
+
+/* 模态框样式 */
+.modal-header {
+    background-color: #f8f9fc;
+    border-bottom: 1px solid #e3e6f0;
+}
+
+.modal-footer {
+    background-color: #f8f9fc;
+    border-top: 1px solid #e3e6f0;
+}
+
+/* 表单样式 */
+.form-label {
+    font-weight: 600;
+    color: #5a5c69;
+    margin-bottom: 0.5rem;
+}
+
+.form-control:focus,
+.form-select:focus {
+    border-color: #4e73df;
+    box-shadow: 0 0 0 0.2rem rgba(78, 115, 223, 0.25);
+}
+
+/* 分页样式 */
+.pagination {
+    margin-bottom: 0;
+}
+
+.page-link {
+    color: #4e73df;
+    border-color: #d1d3e2;
+}
+
+.page-link:hover {
+    color: #2e59d9;
+    background-color: #eaecf4;
+    border-color: #d1d3e2;
+}
+
+.page-item.active .page-link {
+    background-color: #4e73df;
+    border-color: #4e73df;
+}
+
+/* 工具提示样式 */
+.tooltip {
+    font-size: 0.75rem;
+}
+
+/* 自定义滚动条 */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+
+/* 动画效果 */
+.fade-in {
+    animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.slide-in {
+    animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+    from { transform: translateX(-100%); }
+    to { transform: translateX(0); }
+}
+
+/* 打印样式 */
+@media print {
+    .navbar,
+    .btn,
+    .pagination,
+    .modal {
+        display: none !important;
+    }
+    
+    .card {
+        border: 1px solid #ddd !important;
+        box-shadow: none !important;
+    }
+    
+    .table {
+        font-size: 0.8rem;
+    }
+}
