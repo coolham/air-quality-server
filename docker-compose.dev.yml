@@ -6,8 +6,6 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: admin
       MYSQL_DATABASE: air_quality_dev
-      MYSQL_USER: root
-      MYSQL_PASSWORD: admin
     ports:
       - "3307:3306"
     volumes:

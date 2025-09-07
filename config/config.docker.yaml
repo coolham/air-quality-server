@@ -1,4 +1,4 @@
-# 空气质量监测系统 - Docker环境配置文件
+# 空气质量监测系统 - Docker环境配置文件（修复版）
 
 # 服务器配置
 server:
@@ -48,7 +48,7 @@ jwt:
 log:
   level: "info"
   format: "json"
-  output: "stdout"  # Docker环境输出到stdout
+  output: "/app/logs/app.log"  # 输出到文件
   max_size: 100
   max_backups: 3
   max_age: 28
