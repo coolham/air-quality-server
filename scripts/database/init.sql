@@ -48,12 +48,15 @@ CREATE TABLE IF NOT EXISTS unified_sensor_data (
     quality_score DECIMAL(4, 2) COMMENT '数据质量评分',
     extended_data JSON COMMENT '扩展数据',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    deleted_at TIMESTAMP NULL COMMENT '删除时间',
     INDEX idx_device_timestamp (device_id, timestamp),
     INDEX idx_device_type (device_type),
     INDEX idx_sensor_id (sensor_id),
     INDEX idx_sensor_type (sensor_type),
     INDEX idx_timestamp (timestamp),
     INDEX idx_device_id (device_id),
+    INDEX idx_deleted_at (deleted_at),
     FOREIGN KEY (device_id) REFERENCES devices(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='统一传感器数据表';
 
