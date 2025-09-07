@@ -4,14 +4,12 @@
 
 ## 脚本说明
 
-- **docker-start.bat** - 启动生产环境Docker服务
-- **docker-start.sh** - Linux环境启动脚本
-- **docker-dev-start.bat** - 启动开发环境数据库和缓存服务
-- **docker-dev-start.sh** - Linux开发环境启动脚本
-- **docker-dev-full.bat** - 启动完整开发环境（包含应用服务）
+- **docker-start.bat** - Windows生产环境启动脚本
+- **docker-start.sh** - Linux/macOS生产环境启动脚本
+- **docker-dev-start.bat** - Windows开发环境启动脚本
+- **docker-dev-start.sh** - Linux/macOS开发环境启动脚本
 - **docker-stop.sh** - 停止所有Docker容器
-- **docker-build-china.bat** - 中国大陆网络环境Docker构建脚本（Windows）
-- **docker-build-china.sh** - 中国大陆网络环境Docker构建脚本（Linux/macOS）
+- **start-services.sh** - 智能启动脚本（自动选择Docker Compose版本）
 
 ## 使用流程
 
@@ -26,13 +24,10 @@ docker-start.bat
 
 ### 开发环境
 ```cmd
-# 只启动数据库和缓存服务（推荐）
+# Windows开发环境
 docker-dev-start.bat
 
-# 启动完整开发环境（包含应用服务）
-docker-dev-full.bat
-
-# Linux开发环境
+# Linux/macOS开发环境
 ./docker-dev-start.sh
 ```
 
@@ -41,28 +36,16 @@ docker-dev-full.bat
 ./docker-stop.sh
 ```
 
-### 中国大陆网络环境构建
-如果在中国大陆遇到Go模块下载超时问题，请使用专门的构建脚本：
-
-```cmd
-# Windows环境
-REM 构建生产环境镜像
-scripts\docker\docker-build-china.bat
-
-REM 构建开发环境镜像
-scripts\docker\docker-build-china.bat dev
-```
+### 智能启动（推荐）
+自动选择可用的Docker Compose版本：
 
 ```bash
-# Linux/macOS环境
-# 构建生产环境镜像
-./scripts/docker/docker-build-china.sh
+# 给脚本添加执行权限
+chmod +x start-services.sh
 
-# 构建开发环境镜像
-./scripts/docker/docker-build-china.sh dev
+# 运行智能启动脚本
+./start-services.sh
 ```
-
-详细说明请参考：[Docker中国大陆网络问题解决方案](../docs/docker_china_guide.md)
 
 ## 环境说明
 

@@ -2,7 +2,7 @@
 
 ## 文档概览
 
-本文档目录包含了空气质量监测系统的完整技术文档，按功能模块分类整理。
+本文档目录包含了空气质量监测系统的核心技术文档，按功能模块分类整理。
 
 ## 核心文档
 
@@ -18,39 +18,36 @@
 ### 4. Web功能开发
 - **[Web功能开发指南](web_features_guide.md)** - Web数据查看、传感器字段管理、界面开发和功能实现
 
-### 5. Golang Web开发
-- **[Golang Web开发指南](golang_web_development_guide.md)** - 基于实际项目经验的Gin框架Web开发最佳实践
-
 ## 部署文档
 
-### 6. 部署指南
+### 5. 部署指南
 - **[部署指南](deployment_guide.md)** - 系统部署架构、配置和运维指南
 
-### 7. Windows设置
-- **[Windows系统设置指南](windows_setup.md)** - Windows系统下的数据库初始化和环境配置
+### 6. Docker部署
+- **[Docker部署指南](docker_guide.md)** - 完整的Docker容器化部署指南
 
 ## 文档使用建议
 
 ### 新用户入门
 1. 首先阅读 **[系统架构设计指南](system_architecture_guide.md)** 了解整体架构
 2. 然后阅读 **[数据库设计与管理指南](database_guide.md)** 进行数据库初始化
-3. 参考 **[Windows系统设置指南](windows_setup.md)** 完成环境配置
+3. 参考 **[Docker部署指南](docker_guide.md)** 完成环境配置
 4. 最后阅读 **[部署指南](deployment_guide.md)** 进行系统部署
 
 ### 开发者参考
-1. **[Golang Web开发指南](golang_web_development_guide.md)** - Web开发最佳实践
-2. **[MQTT功能设计与实现指南](mqtt_guide.md)** - MQTT功能开发
-3. **[Web功能开发指南](web_features_guide.md)** - Web界面开发
+1. **[MQTT功能设计与实现指南](mqtt_guide.md)** - MQTT功能开发
+2. **[Web功能开发指南](web_features_guide.md)** - Web界面开发
+3. **[系统架构设计指南](system_architecture_guide.md)** - 系统架构理解
 
 ### 运维人员参考
 1. **[部署指南](deployment_guide.md)** - 生产环境部署
-2. **[数据库设计与管理指南](database_guide.md)** - 数据库运维
-3. **[系统架构设计指南](system_architecture_guide.md)** - 系统监控
+2. **[Docker部署指南](docker_guide.md)** - 容器化部署
+3. **[数据库设计与管理指南](database_guide.md)** - 数据库运维
 
 ## 文档更新记录
 
+- **2024-12-XX**: 清理冗余文档，保留核心文档
 - **2024-09-07**: 完成文档整理，将重复文档合并为单一指南
-- **2024-09-07**: 新增Golang Web开发指南，总结实际开发经验
 - **2024-09-07**: 优化文档结构，按功能模块分类
 
 ## 贡献指南

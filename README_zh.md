@@ -71,9 +71,30 @@
 ## 快速开始
 
 ### 环境要求
-- Docker 20.10+
-- Docker Compose 2.0+
-- Go 1.21+ (开发环境)
+
+#### 生产环境
+- **Docker**: 24.0+ (推荐 28.4+)
+- **Docker Compose**: V2 (集成在Docker中) 或 V1 (独立安装)
+- **操作系统**: Linux (Ubuntu 20.04+, CentOS 8+), macOS, Windows
+- **内存**: 最少 2GB 可用内存
+- **存储**: 最少 5GB 可用磁盘空间
+
+#### 开发环境
+- **Go**: 1.21+
+- **Docker**: 24.0+ (推荐 28.4+)
+- **Docker Compose**: V2 或 V1
+- **Git**: 2.0+
+
+#### 端口要求
+- **3308**: MySQL数据库 (生产环境)
+- **3307**: MySQL数据库 (开发环境)
+- **6381**: Redis缓存 (生产环境)
+- **6380**: Redis缓存 (开发环境)
+- **8082**: Web应用 (生产环境)
+- **8083**: Web应用 (开发环境)
+- **1883**: MQTT Broker
+
+> **注意**: 如果宿主机已占用3306、6379、8080端口，系统会自动使用上述备用端口。
 
 ### 部署步骤
 
@@ -83,20 +104,55 @@ git clone <repository-url>
 cd air-quality-server
 ```
 
-2. **启动服务**
+2. **检查Docker环境**
 ```bash
-# 启动所有服务
-docker-compose up -d
+# 检查Docker版本
+docker --version
+
+# 检查Docker Compose版本
+docker compose version  # V2语法
+# 或
+docker-compose --version  # V1语法
 ```
 
-3. **验证部署**
+3. **启动服务**
+
+**使用Docker Compose V2 (推荐):**
 ```bash
-# 检查服务状态
+# 启动所有服务
+docker compose up --build -d
+```
+
+**使用Docker Compose V1:**
+```bash
+# 启动所有服务
+docker-compose up --build -d
+```
+
+**使用智能启动脚本:**
+```bash
+# 自动选择可用的Docker Compose版本
+chmod +x scripts/docker/start-services.sh
+./scripts/docker/start-services.sh
+```
+
+4. **验证部署**
+```bash
+# 检查服务状态 (V2)
+docker compose ps
+
+# 检查服务状态 (V1)
 docker-compose ps
 
 # 测试API
-curl http://localhost:8080/health
+curl http://localhost:8082/health
 ```
+
+5. **访问服务**
+- **Web界面**: http://localhost:8082
+- **MySQL**: localhost:3308
+- **Redis**: localhost:6381
+- **MQTT**: localhost:1883
 
 ### 开发环境
 
@@ -166,10 +222,100 @@ air-quality-server/
 
 ## 文档
 
+### 系统文档
 - [系统设计文档](docs/system_design.md) - 详细的系统架构设计
 - [模块接口文档](docs/module_interfaces.md) - 各模块接口定义
 - [数据库设计文档](docs/database_design.md) - 数据库表结构设计
 - [部署指南](docs/deployment_guide.md) - 详细的部署和运维指南
+
+### Docker相关文档
+- [Docker部署指南](docs/docker_guide.md) - 完整的Docker部署指南
+
+## 故障排除
+
+### Docker相关问题
+
+#### 1. ContainerConfig错误
+```bash
+# 使用智能启动脚本
+chmod +x scripts/docker/start-services.sh
+./scripts/docker/start-services.sh
+```
+
+#### 2. 端口冲突
+```bash
+# 检查端口占用
+lsof -i :3308
+lsof -i :6381
+lsof -i :8082
+
+# 使用智能启动脚本
+chmod +x scripts/docker/start-services.sh
+./scripts/docker/start-services.sh
+```
+
+#### 3. Go模块下载超时（中国大陆）
+```bash
+# 设置Go代理环境变量
+export GOPROXY=https://goproxy.cn,direct
+export GOSUMDB=sum.golang.google.cn
+
+# 然后启动服务
+docker compose up --build -d
+```
+
+#### 4. Docker版本过旧
+```bash
+# 参考Docker升级指南
+# docs/docker_upgrade_ubuntu24.md
+```
+
+#### 5. 找不到docker-compose命令
+```bash
+# 使用Docker Compose V2
+docker compose up --build -d
+
+# 或使用智能启动脚本
+chmod +x scripts/docker/start-services.sh
+./scripts/docker/start-services.sh
+```
+
+#### 6. Docker Compose版本警告
+```bash
+# 警告信息：the attribute `version` is obsolete
+# 解决方案：已从所有docker-compose文件中移除version字段
+# 验证修复：
+docker compose config
+```
+
+### 服务管理
+
+#### 启动服务
+```bash
+# 生产环境
+docker compose up --build -d
+
+# 开发环境
+docker compose -f docker-compose.dev.yml up --build -d
+```
+
+#### 停止服务
+```bash
+# 停止所有服务
+docker compose down
+
+# 停止并删除数据卷
+docker compose down -v
+```
+
+#### 查看日志
+```bash
+# 查看所有服务日志
+docker compose logs -f
+
+# 查看特定服务日志
+docker compose logs -f air-quality-server
+```
 
 ## 贡献指南
 
