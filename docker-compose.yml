@@ -38,8 +38,9 @@ services:
       retries: 5
 
   # 空气质量监测应用
-  air-quality-server:
+  app:
     build: .
+    image: air-quality-server:latest
     container_name: air-quality-server
     ports:
       - "8082:8080"  # Web服务端口

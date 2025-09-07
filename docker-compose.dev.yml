@@ -52,10 +52,11 @@ services:
     restart: unless-stopped
 
   # 开发环境应用程序（可选，用于容器化开发）
-  air-quality-server-dev:
+  app-dev:
     build:
       context: .
       dockerfile: Dockerfile.dev
+    image: air-quality-server:dev
     container_name: air-quality-server-dev
     ports:
       - "8083:8080"  # Web服务端口
