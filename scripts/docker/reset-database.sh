@@ -28,7 +28,7 @@ fi
 
 echo ""
 echo "步骤 1: 停止所有服务..."
-docker-compose down
+docker compose down
 
 echo ""
 echo "步骤 2: 删除 MySQL 数据卷..."
@@ -51,7 +51,7 @@ fi
 echo ""
 echo "步骤 4: 重新启动服务..."
 echo "现在 MySQL 会重新执行 init.sql 脚本，创建新的表结构"
-docker-compose up -d
+docker compose up -d
 
 echo ""
 echo "等待数据库初始化完成..."
@@ -60,7 +60,7 @@ sleep 30
 echo ""
 echo "步骤 5: 验证数据库结构..."
 echo "检查 unified_sensor_data 表是否包含新字段..."
-docker-compose exec mysql mysql -uroot -padmin -e "DESCRIBE air_quality.unified_sensor_data;" 2>/dev/null
+docker compose exec mysql mysql -uroot -padmin -e "DESCRIBE air_quality.unified_sensor_data;" 2>/dev/null
 
 if [ $? -eq 0 ]; then
     echo ""
@@ -77,7 +77,7 @@ if [ $? -eq 0 ]; then
 else
     echo ""
     echo "❌ 数据库重置失败！"
-    echo "请检查 Docker 日志：docker-compose logs mysql"
+    echo "请检查 Docker 日志：docker compose logs mysql"
 fi
 
 echo ""
