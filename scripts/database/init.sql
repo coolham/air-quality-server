@@ -243,14 +243,15 @@ INSERT IGNORE INTO devices (id, name, type, location_latitude, location_longitud
 ('HCHO_002', '甲醛监测设备002', 'hcho', 31.2304, 121.4737, '上海市黄浦区', 'online', '{"report_interval": 60, "sensors": {"formaldehyde": true, "temperature": true, "humidity": true, "battery": true}}');
 
 -- 插入示例告警规则
-INSERT IGNORE INTO alert_rules (name, device_id, metric, condition_type, threshold_value, duration_seconds, severity, enabled, notification_channels) VALUES 
-('PM2.5超标告警', NULL, 'pm25', 'gt', 75.0, 300, 'warning', TRUE, '["email", "sms"]'),
-('PM10超标告警', NULL, 'pm10', 'gt', 150.0, 300, 'warning', TRUE, '["email", "sms"]'),
-('CO2浓度告警', NULL, 'co2', 'gt', 1000.0, 600, 'critical', TRUE, '["email", "sms", "webhook"]'),
-('甲醛浓度告警', NULL, 'formaldehyde', 'gt', 0.08, 300, 'critical', TRUE, '["email", "sms", "webhook"]'),
-('温度异常告警', NULL, 'temperature', 'gt', 40.0, 180, 'warning', TRUE, '["email"]'),
-('湿度异常告警', NULL, 'humidity', 'lt', 20.0, 300, 'info', TRUE, '["email"]'),
-('电池电量低告警', NULL, 'battery', 'lt', 20.0, 600, 'warning', TRUE, '["email"]');
+INSERT IGNORE INTO alert_rules (id, name, device_id, metric, condition_type, threshold_value, duration_seconds, severity, enabled, notification_channels) VALUES 
+(0, '系统默认告警', NULL, 'default', 'gt', 0.0, 0, 'info', TRUE, '["email"]'),
+(1, 'PM2.5超标告警', NULL, 'pm25', 'gt', 75.0, 300, 'warning', TRUE, '["email", "sms"]'),
+(2, 'PM10超标告警', NULL, 'pm10', 'gt', 150.0, 300, 'warning', TRUE, '["email", "sms"]'),
+(3, 'CO2浓度告警', NULL, 'co2', 'gt', 1000.0, 600, 'critical', TRUE, '["email", "sms", "webhook"]'),
+(4, '甲醛浓度告警', NULL, 'formaldehyde', 'gt', 0.08, 300, 'critical', TRUE, '["email", "sms", "webhook"]'),
+(5, '温度异常告警', NULL, 'temperature', 'gt', 40.0, 180, 'warning', TRUE, '["email"]'),
+(6, '湿度异常告警', NULL, 'humidity', 'lt', 20.0, 300, 'info', TRUE, '["email"]'),
+(7, '电池电量低告警', NULL, 'battery', 'lt', 20.0, 600, 'warning', TRUE, '["email"]');
 
 -- 创建数据迁移版本表
 CREATE TABLE IF NOT EXISTS schema_migrations (
