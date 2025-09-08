@@ -35,9 +35,10 @@ type UnifiedSensorData struct {
 	VOC *float64 `json:"voc" gorm:"type:decimal(8,3);comment:挥发性有机化合物 μg/m³"`
 
 	// 设备状态信息
-	Battery        *int   `json:"battery" gorm:"type:int;comment:电池电量 %"`
-	SignalStrength *int   `json:"signal_strength" gorm:"type:int;comment:信号强度 dBm"`
-	DataQuality    string `json:"data_quality" gorm:"type:varchar(20);default:good;comment:数据质量"`
+	Battery        *int     `json:"battery" gorm:"type:int;comment:电池电量 %"`
+	SignalStrength *int     `json:"signal_strength" gorm:"type:int;comment:信号强度 dBm"`
+	DataQuality    string   `json:"data_quality" gorm:"type:varchar(20);default:good;comment:数据质量"`
+	QualityScore   *float64 `json:"quality_score" gorm:"type:decimal(4,2);comment:数据质量评分"`
 
 	// 位置信息
 	Latitude  *float64 `json:"latitude" gorm:"type:decimal(10,8);comment:纬度"`

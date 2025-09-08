@@ -56,6 +56,7 @@ CREATE TABLE IF NOT EXISTS unified_sensor_data (
     battery INT COMMENT '电池电量 %',
     signal_strength INT COMMENT '信号强度 dBm',
     data_quality VARCHAR(20) DEFAULT 'good' COMMENT '数据质量',
+    quality_score DECIMAL(4, 2) COMMENT '数据质量评分',
     
     -- 位置信息
     latitude DECIMAL(10, 8) COMMENT '纬度',
