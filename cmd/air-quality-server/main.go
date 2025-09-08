@@ -258,7 +258,7 @@ func initMQTTServer(cfg *config.Config, logger utils.Logger, repos *repositories
 	// 创建MQTT服务器
 	mqttServer := mqtt.NewServer(&cfg.MQTT, logger, sensorDataHandler)
 
-	// 启动MQTT服务器
+	// 启动MQTT服务器windo
 	if err := mqttServer.Start(); err != nil {
 		logger.Error("启动MQTT服务器失败", utils.ErrorField(err))
 		return nil
