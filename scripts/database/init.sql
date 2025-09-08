@@ -33,23 +33,42 @@ CREATE TABLE IF NOT EXISTS unified_sensor_data (
     sensor_id VARCHAR(64) COMMENT '传感器ID',
     sensor_type VARCHAR(50) COMMENT '传感器类型',
     timestamp TIMESTAMP NOT NULL COMMENT '数据时间戳',
-    pm25 DECIMAL(8, 2) COMMENT 'PM2.5浓度',
-    pm10 DECIMAL(8, 2) COMMENT 'PM10浓度',
-    co2 DECIMAL(8, 2) COMMENT 'CO2浓度',
-    formaldehyde DECIMAL(8, 2) COMMENT '甲醛浓度',
-    temperature DECIMAL(6, 2) COMMENT '温度',
-    humidity DECIMAL(6, 2) COMMENT '湿度',
-    pressure DECIMAL(8, 2) COMMENT '气压',
-    battery DECIMAL(5, 2) COMMENT '电池电量',
+    
+    -- 核心环境指标
+    pm25 DECIMAL(8, 3) COMMENT 'PM2.5浓度 μg/m³',
+    pm10 DECIMAL(8, 3) COMMENT 'PM10浓度 μg/m³',
+    co2 DECIMAL(8, 3) COMMENT 'CO2浓度 ppm',
+    formaldehyde DECIMAL(8, 3) COMMENT '甲醛浓度 mg/m³',
+    
+    -- 环境参数
+    temperature DECIMAL(6, 2) COMMENT '温度 °C',
+    humidity DECIMAL(6, 2) COMMENT '湿度 %',
+    pressure DECIMAL(8, 2) COMMENT '气压 hPa',
+    
+    -- 其他污染物指标
+    o3 DECIMAL(8, 3) COMMENT '臭氧浓度 μg/m³',
+    no2 DECIMAL(8, 3) COMMENT '二氧化氮浓度 μg/m³',
+    so2 DECIMAL(8, 3) COMMENT '二氧化硫浓度 μg/m³',
+    co DECIMAL(8, 3) COMMENT '一氧化碳浓度 mg/m³',
+    voc DECIMAL(8, 3) COMMENT '挥发性有机化合物 μg/m³',
+    
+    -- 设备状态信息
+    battery INT COMMENT '电池电量 %',
+    signal_strength INT COMMENT '信号强度 dBm',
     data_quality VARCHAR(20) DEFAULT 'good' COMMENT '数据质量',
-    location_latitude DECIMAL(10, 8) COMMENT '纬度',
-    location_longitude DECIMAL(11, 8) COMMENT '经度',
-    location_address VARCHAR(200) COMMENT '地址',
-    quality_score DECIMAL(4, 2) COMMENT '数据质量评分',
+    
+    -- 位置信息
+    latitude DECIMAL(10, 8) COMMENT '纬度',
+    longitude DECIMAL(11, 8) COMMENT '经度',
+    
+    -- 扩展数据
     extended_data JSON COMMENT '扩展数据',
+    
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
     deleted_at TIMESTAMP NULL COMMENT '删除时间',
+    
+    -- 索引
     INDEX idx_device_timestamp (device_id, timestamp),
     INDEX idx_device_type (device_type),
     INDEX idx_sensor_id (sensor_id),
@@ -57,6 +76,14 @@ CREATE TABLE IF NOT EXISTS unified_sensor_data (
     INDEX idx_timestamp (timestamp),
     INDEX idx_device_id (device_id),
     INDEX idx_deleted_at (deleted_at),
+    INDEX idx_pm25 (pm25),
+    INDEX idx_pm10 (pm10),
+    INDEX idx_co2 (co2),
+    INDEX idx_formaldehyde (formaldehyde),
+    INDEX idx_temperature (temperature),
+    INDEX idx_humidity (humidity),
+    INDEX idx_pressure (pressure),
+    
     FOREIGN KEY (device_id) REFERENCES devices(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='统一传感器数据表';
 

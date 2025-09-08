@@ -115,6 +115,15 @@ docker compose version  # V2语法
 docker-compose --version  # V1语法
 ```
 
+**Docker版本要求**: Docker 24.0+ (推荐最新版本)
+
+如果您的Docker版本较旧（如27.x），请先升级：
+```bash
+# 使用升级脚本
+chmod +x scripts/docker/upgrade-docker-ubuntu.sh
+./scripts/docker/upgrade-docker-ubuntu.sh
+```
+
 3. **启动服务**
 
 **使用Docker Compose V2 (推荐):**
