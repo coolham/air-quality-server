@@ -163,6 +163,8 @@ CREATE TABLE IF NOT EXISTS alerts (
     resolved_by BIGINT NULL COMMENT '解决人',
     message TEXT COMMENT '告警消息',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    deleted_at TIMESTAMP NULL COMMENT '删除时间',
     INDEX idx_rule_id (rule_id),
     INDEX idx_device_id (device_id),
     INDEX idx_status (status),
